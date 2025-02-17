@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User,Profile
+from .models import User,Profile,Feedback
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -71,3 +71,10 @@ class ChangePasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(required=True,write_only=True)
     new_password = serializers.CharField(required=True,write_only=True)
     confirm_new_password= serializers.CharField(required=True,write_only=True)
+
+
+
+class FeedbackCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feedback
+        fields = ("urgency", "subject", "message", "emoji", "attachment")

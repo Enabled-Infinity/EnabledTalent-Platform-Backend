@@ -5,7 +5,6 @@ from .managers import CustomUserManager
 from django.utils import timezone
 import random 
 
-import random 
 
 
 class User(AbstractUser):
@@ -73,3 +72,15 @@ class Profile(models.Model):
 
     def __str__(self):
         return str(self.user)
+
+URGENCYY = ((1, 1), (2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9))
+class Feedback(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    urgency = models.IntegerField(choices=URGENCYY)
+    subject = models.CharField(max_length=30)
+    message = models.TextField()
+    emoji = models.CharField(max_length=50,blank=True, null=True)
+    attachment = models.ImageField(upload_to='Platform-Feedbacks/',validators=[validate_image_file_extension],blank=True,null=True)
+
+    def __str__(self):
+        return self.user.email
