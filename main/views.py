@@ -15,7 +15,7 @@ class BlockNoteViewSet(viewsets.ModelViewSet):
     queryset = models.BlockNote.objects.all()
     serializer_class = serializers.BlockNoteSerializer
     permission_classes = (permissions.IsAuthenticated,)
-    filterset_fields = ('subspace',)
+
 
     def get_queryset(self):
         filter = models.BlockNote.objects.filter(user=self.request.user)
@@ -85,11 +85,10 @@ class ConvoViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = serializers.ConvoSerializer
     pagination_class = CustomPagination
-    filterset_fields = ('subspace',)
 
     def get_queryset(self):
-        workspace = self.request.user.workspace_set.first()
-        return models.Convo.objects.filter(subspace__workspace=workspace)
+        organization = self.request.user.organization_set.first()
+        return models.Convo.objects.filter(organization=organization)
     
 
     def create(self, request, *args, **kwargs):
@@ -113,21 +112,20 @@ class ConvoViewSet(viewsets.ModelViewSet):
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        subspace = instance.subspace
         # should work ig idk test and see
 
         self.perform_destroy(instance)
-        workspace = self.request.user.workspace_set.first()
+        organization = self.request.user.organization_set.first()
 
-        if models.Convo.objects.filter(subspace=subspace).count() < 1:
+        if models.Convo.objects.filter(organization=organization).count() < 1:
             models.Convo.objects.create(
-                subspace=subspace,
+                organization=organization,
                 
             )
             
         return Response(status=status.HTTP_200_OK)
     
-    @action(methods=("GET",), detail=True, url_path="subspace-convos")
+    @action(methods=("GET",), detail=True, url_path="organization-convos")
     def get_subspace_convos(self, request, pk):
         return Response(serializers.ConvoSerializer(models.Convo.objects.filter(subspace_id=int(pk)), many=True).data)
 
@@ -136,12 +134,11 @@ class ChannelViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     queryset = models.Channel.objects.all()
     serializer_class = serializers.ChannelSerializer
-    filterset_fields = ('subspace',)
 
     def get_queryset(self):
         # Customize queryset based on the request or user
         user = self.request.user
-        return models.Channel.objects.filter(subspace__workspace=user.workspace_set.first())
+        return models.Channel.objects.filter(organization=user.organization_set.first())
     
 
     def create(self, request, *args, **kwargs):
