@@ -30,6 +30,38 @@ class EventHandler(AssistantEventHandler):
                     if output.type == "logs":
                         print(f"\n{output.logs}", flush=True)
 
+def parse_followup_questions(text):
+    arr = []
+
+    for line in text.split("\n"):
+        if len(line) > 0 and line[0].isdigit():
+            arr.append(line)
+    return arr
+
+
+def followup_questions(query, output):
+    thread= client.beta.threads.create()
+
+    client.beta.threads.messages.create(
+        thread_id=thread.id,
+        role="user",
+        content=f"this is the query: {query} this is the output: {output}"
+    )
+
+    with client.beta.threads.runs.stream(
+        thread_id=thread.id,
+        assistant_id="asst_3eiLzVA3bmfmqZZjHW3GZtKS",
+        event_handler=EventHandler(),
+    ) as stream:
+        stream.until_done()
+
+    all_messages= client.beta.threads.messages.list(thread_id=thread.id)
+    assistant_response= all_messages.data[0].content[0]
+    output= assistant_response.text.value
+
+    return parse_followup_questions(output)
+
+
 
 def create_message_with_or_without_file(file, user_query, thread):
     # Check if a file is provided
@@ -99,10 +131,10 @@ def generate_insights_with_gpt4(user_query: str, convo: int, channel_name, file=
 
     elif isinstance(assistant_response, ImageFileContentBlock):
         print("block-2")
-        file_content = client.files.content(
+        file_content= client.files.content(
             assistant_response.image_file.file_id
         ).content
-        image_file = ContentFile(file_content, name=f"{uuid.uuid4()}.png")
+        image_file= ContentFile(file_content, name=f"{uuid.uuid4()}.png")
 
         # Handle response with both image and text
         if "text" in assistant_response.type:

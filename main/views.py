@@ -233,7 +233,6 @@ class PromptViewSet(viewsets.ModelViewSet):
             {
                 "id": prompt_instance.id,
                 "text_query": prompt_instance.text_query,
-                "related_docs": prompt_instance.emsaller,
             },
             status=status.HTTP_201_CREATED,
         )
