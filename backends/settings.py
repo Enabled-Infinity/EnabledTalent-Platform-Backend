@@ -28,7 +28,9 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    "daphne",
     'django.contrib.staticfiles',
+    "channels",
     'rest_framework',
     "corsheaders",
     "django_rest_passwordreset",
@@ -111,7 +113,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'backends.wsgi.application'
+#WSGI_APPLICATION = 'backends.wsgi.application'
+ASGI_APPLICATION= 'backends.asgi.application'
 AUTH_USER_MODEL= 'users.User'
 
 EMAIL_HOST = os.environ["EMAIL_HOST"]

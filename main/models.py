@@ -4,11 +4,120 @@ from django.core.validators import FileExtensionValidator
 from openai import OpenAI
 from organization.models import Organization
 from dotenv import load_dotenv
+from openai import AssistantEventHandler
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from django.shortcuts import get_object_or_404
 from django.conf import settings
+import uuid
+from django.core.files.base import ContentFile
+from openai.types.beta.threads.image_file_content_block import ImageFileContentBlock
+from openai.types.beta.threads.image_url_content_block import ImageURLContentBlock
+from openai.types.beta.threads.text_content_block import TextContentBlock
+from .agent import query_candidates
 
 load_dotenv()
 client = OpenAI()
 
+class EventHandler(AssistantEventHandler):
+    def on_tool_call_delta(self, delta, snapshot):
+        if delta.type == "code_interpreter":
+            if delta.code_interpreter.input:
+                print(delta.code_interpreter.input, end="", flush=True)
+            if delta.code_interpreter.outputs:
+                print("\n\noutput >", flush=True)
+                for output in delta.code_interpreter.outputs:
+                    if output.type == "logs":
+                        print(f"\n{output.logs}", flush=True)
+
+
+def create_message_with_or_without_file(file, user_query, thread):
+    # Check if a file is provided
+    if file:
+        with file.open():  # Using context manager to ensure proper file handling
+            message_file = client.files.create(
+                file=file.file.file, purpose="assistants"
+            )
+
+        # Create a message with file attachment
+        message= client.beta.threads.messages.create(
+            thread_id=thread.id,
+            role="user",
+            content=user_query,
+            attachments=[
+                {
+                    "file_id": message_file.id,
+                    "tools": [{"type": "file_search"}, {"type": "code_interpreter"}],
+                }
+            ],
+        )
+    else:
+        # Create a message without any file attachment
+        message = client.beta.threads.messages.create(
+            thread_id=thread.id, role="user", content=user_query
+        )
+
+
+    return message
+
+
+def generate_insights_with_gpt4(user_query: str, convo: int, channel_name, file=None):
+    get_convo = get_object_or_404(Convo, id=convo)
+    history = get_convo.prompt_set.all()
+    all_prompts = history.count()
+
+    rag_context= query_candidates(user_query)
+    print('this-is-rag-contextttt', rag_context)
+
+    if all_prompts >= 2:  # system prompt counts as a prompt
+        thread = client.beta.threads.retrieve(thread_id=get_convo.thread_id)
+    else:
+        # Create a new thread and save the thread ID
+        thread = client.beta.threads.create()
+        get_convo.thread_id = thread.id
+        get_convo.save()
+    
+    create_message_with_or_without_file(file, user_query, thread)
+    for context in rag_context:
+        print(context)
+        print(type(context))
+        rag_message = client.beta.threads.messages.create(
+            thread_id=thread.id,
+            role="user",
+            content="This is a system message and doesn't come from user. For answering questions use these data"+context,
+            metadata={'message_type': 'this is rag input'}
+        )
+
+    all_messages = client.beta.threads.messages.list(thread_id=thread.id)
+    assistant_response = all_messages.data[0].content[0]
+
+    if isinstance(assistant_response, TextContentBlock):
+        print("block-1")
+        return {
+            "text": assistant_response.text.value
+        }
+
+    elif isinstance(assistant_response, ImageFileContentBlock):
+        print("block-2")
+        file_content = client.files.content(
+            assistant_response.image_file.file_id
+        ).content
+        image_file = ContentFile(file_content, name=f"{uuid.uuid4()}.png")
+
+        # Handle response with both image and text
+        if "text" in assistant_response.type:
+            return {
+                "text": assistant_response.text.value,
+                "image": image_file
+            }
+        # Handle response with image only
+        return {"image": image_file}
+
+    elif isinstance(assistant_response, ImageURLContentBlock):
+        raise Exception("received ImageURLContentBlock, unable to process this...")
+
+    else:
+        raise Exception(f"Unhandled content block type: {type(assistant_response)}")
 
 class APICredentials(models.Model):
     key_1= models.CharField(max_length=255,null=True, blank=True)
