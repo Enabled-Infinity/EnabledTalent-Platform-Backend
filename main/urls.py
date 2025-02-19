@@ -7,15 +7,19 @@ from .views import (
     ConvoViewSet,
     NoteViewSet,
     PromptViewSet,
+    BlockNoteViewSet,
+    ChannelViewSet
 )
 
 router = DefaultRouter()
 # Register viewsets with the router
 
-
+router.register(r'blocknotes', BlockNoteViewSet, basename='blocknote')
 router.register(r"note", NoteViewSet, basename="note")
 router.register(r"convos", ConvoViewSet, basename="convos")
 router.register(r"promptinputs", PromptViewSet, basename="prompt")  # If this is here
+router.register(r'', ChannelViewSet, basename='channels')
+
 
 # Define urlpatterns including the router's URLs
 urlpatterns = [
