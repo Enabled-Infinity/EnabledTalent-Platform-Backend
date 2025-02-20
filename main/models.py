@@ -1,6 +1,6 @@
 import fitz  # PyMuPDF
 from django.db import models
-from django.core.validators import FileExtensionValidator
+from django.core.validators import FileExtensionValidator,validate_image_file_extension
 from openai import OpenAI
 from organization.models import Organization
 from dotenv import load_dotenv
@@ -193,7 +193,7 @@ class Channel(models.Model):
 class CandidateProfile(models.Model):
     resume_file = models.FileField(upload_to='Candidates-Resume', validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
     resume_data = models.TextField(blank=True, null=True)
-    profile_avatar_url= models.CharField(max_length=100, blank=True, null=True)
+    profile_avatar= models.ImageField(upload_to='Candidate-Photo', validators=[validate_image_file_extension], blank=True, null=True)
     phone_number = models.CharField(max_length=15, unique=True)
     current_location = models.CharField(max_length=200)
     linkedin_url = models.URLField(unique=True)
