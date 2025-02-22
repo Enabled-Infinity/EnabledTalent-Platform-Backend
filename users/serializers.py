@@ -14,7 +14,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         if validated_data["password"] == validated_data["confirm_password"]:
              return User.objects.create_user(
-                username=validated_data["username"], password=validated_data["password"]
+                email=validated_data["email"], password=validated_data["password"]
                 )
         else:
             return  serializers.ValidationError("Password and confirmation do not match.") 

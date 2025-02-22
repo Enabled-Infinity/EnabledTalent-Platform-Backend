@@ -23,6 +23,35 @@ class ChannelCreateSerializer(serializers.ModelSerializer):
         model = models.Channel
         fields = ["channel_type", "credentials"]
 
+    def create(self, validated_data):
+        credentials_data = validated_data.pop('credentials', None)
+        
+        # Create the Channel instance
+        channel = models.Channel.objects.create(**validated_data)
+
+        if credentials_data:
+            credentials = models.APICredentials.objects.create(**credentials_data)
+            channel.credentials = credentials
+            channel.save()
+
+        return channel
+    
+    def update(self, instance, validated_data):
+        credentials_data = validated_data.pop('credentials', None)
+
+        # Update the Channel instance
+        instance.channel_type = validated_data.get('channel_type', instance.channel_type)
+        instance.save()
+
+        # Update credentials if provided
+        if credentials_data:
+            credentials_instance, _ = models.APICredentials.objects.get_or_create(id=instance.credentials.id)
+            for key, value in credentials_data.items():
+                setattr(credentials_instance, key, value)
+            credentials_instance.save()
+
+        return instance
+
 class ConvoCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Convo

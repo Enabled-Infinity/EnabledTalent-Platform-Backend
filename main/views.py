@@ -24,7 +24,7 @@ class BlockNoteViewSet(viewsets.ModelViewSet):
 
 
     def get_queryset(self):
-        filter = models.BlockNote.objects.filter(user=self.request.user)
+        filter = models.BlockNote.objects.filter(organization=self.request.user.organization_set.all()[0])
         return filter
     
     
@@ -45,6 +45,7 @@ class BlockNoteViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save(
             user=request.user,
+            organization=self.request.user.organization_set.all()[0]
                         )
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data,headers=headers)
@@ -98,11 +99,12 @@ class ConvoViewSet(viewsets.ModelViewSet):
     
 
     def create(self, request, *args, **kwargs):
+        org=(request.user.organization_set.all()[0])
         serializer = serializers.ConvoCreateSerializer(
             data=request.data
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(organization= org)
         return Response(serializer.data,status=status.HTTP_201_CREATED)
     
     
@@ -131,9 +133,6 @@ class ConvoViewSet(viewsets.ModelViewSet):
             
         return Response(status=status.HTTP_200_OK)
     
-    @action(methods=("GET",), detail=True, url_path="organization-convos")
-    def get_subspace_convos(self, request, pk):
-        return Response(serializers.ConvoSerializer(models.Convo.objects.filter(subspace_id=int(pk)), many=True).data)
 
 
 class ChannelViewSet(viewsets.ModelViewSet):
@@ -150,7 +149,7 @@ class ChannelViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = serializers.ChannelCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(organization= self.request.user.organization_set.all()[0])
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
@@ -193,11 +192,11 @@ class PromptViewSet(viewsets.ModelViewSet):
         convo = get_object_or_404(models.Convo, pk=self.kwargs["pk"])
 
         channel_name = request.user.ws_channel_name
-        if not channel_name:
-            return Response(
-                {"detail": "User is not connected to any workspace"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        #if not channel_name:
+            #return Response(
+                #{"detail": "User is not connected to any workspace"},
+                #status=status.HTTP_400_BAD_REQUEST,
+            #)
 
         # Create Prompt instance but do not save it yet
         prompt_instance = serializer.save(convo=convo, author=request.user)
@@ -220,8 +219,9 @@ class PromptViewSet(viewsets.ModelViewSet):
             channel_name=channel_name,
             file=prompt_instance.file_query or None,
         )
-        prompt_instance.response_text = response_data.get("text", None)
-        prompt_instance.response_file = response_data.get("image", None)
+        print(response_data.get("text", None),'fre')
+        prompt_instance.response_text= response_data.get("text", None)
+        prompt_instance.response_file= response_data.get("image", None)
         prompt_instance.save()
 
         end_time = datetime.now()
@@ -233,6 +233,7 @@ class PromptViewSet(viewsets.ModelViewSet):
             {
                 "id": prompt_instance.id,
                 "text_query": prompt_instance.text_query,
+                "response_text": prompt_instance.response_text,
             },
             status=status.HTTP_201_CREATED,
         )
@@ -266,7 +267,7 @@ class PromptViewSet(viewsets.ModelViewSet):
         request.data["prompt"] = prompt.pk
         serializer = serializers.CreateNoteSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(prompt=prompt)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=("POST",), detail=True, url_path="create-note")
