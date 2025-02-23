@@ -192,11 +192,11 @@ class PromptViewSet(viewsets.ModelViewSet):
         convo = get_object_or_404(models.Convo, pk=self.kwargs["pk"])
 
         channel_name = request.user.ws_channel_name
-        #if not channel_name:
-            #return Response(
-                #{"detail": "User is not connected to any workspace"},
-                #status=status.HTTP_400_BAD_REQUEST,
-            #)
+        if not channel_name:
+            return Response(
+                {"detail": "User is not connected to any workspace"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Create Prompt instance but do not save it yet
         prompt_instance = serializer.save(convo=convo, author=request.user)
