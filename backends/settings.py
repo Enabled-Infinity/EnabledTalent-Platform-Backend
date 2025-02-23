@@ -213,7 +213,7 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     'https://kleenestar.vercel.app',
     'http://35.183.134.254',
-    '35.183.134.254'
+    #'35.183.134.254'
 ]
 
 CORS_ALLOWED_ORIGINS = CSRF_TRUSTED_ORIGINS
