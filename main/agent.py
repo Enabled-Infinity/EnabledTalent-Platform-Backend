@@ -83,6 +83,7 @@ def query_candidates(query: str):
     results = agent_executor.invoke({"messages": [HumanMessage(content=query)]})
     # Extract and return results
     outputs = [str(result.content) for result in results['messages'] if isinstance(result, ToolMessage)]
+    print(outputs,'efrefr')
     return outputs
 
 
