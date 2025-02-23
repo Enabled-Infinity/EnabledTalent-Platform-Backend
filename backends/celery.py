@@ -4,9 +4,9 @@ from celery import schedules
 
 # set the default Django settings module for the 'celery' program.
 # this is also used in manage.py
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backends.settings')
 
-app = Celery('backend')
+app = Celery('backends')
 
 # Using a string here means the worker don't have to serialize
 # the configuration object to child processes.
