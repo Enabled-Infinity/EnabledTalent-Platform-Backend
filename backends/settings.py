@@ -127,7 +127,8 @@ EMAIL_DEBUG = True
 
 
 INTERNAL_IPS = [
-    "127.0.0.1"
+    "127.0.0.1",
+    "35.183.134.254"
 ]
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -210,7 +211,8 @@ CORS_ALLOW_CREDENTIALS = True
 
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://kleenestar.vercel.app'
+    'https://kleenestar.vercel.app',
+    'http://35.183.134.254'
 ]
 
 CORS_ALLOWED_ORIGINS = CSRF_TRUSTED_ORIGINS
