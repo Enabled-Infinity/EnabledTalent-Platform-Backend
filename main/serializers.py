@@ -115,3 +115,24 @@ class PromptFeedbackCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PromptFeedback
         fields = ('category', 'note')
+
+
+class SkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model= models.Skills
+        fields= ['name']
+
+class JobPostCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model= models.JobPost
+        fields= ['title', 'job_desc', 'workplace_type', 'location'
+                 'job_type', 'skills']
+
+class JobPostSerializer(serializers.ModelSerializer):
+    user= UserSerializer()
+    organization= OrganizationSerializer()
+    skills= SkillSerializer(many=True)
+    class Meta:
+        model= models.JobPost
+        fields= ['user','organization', 'title', 'job_desc', 'workplace_type',
+                 'location', 'job_type', 'skills']

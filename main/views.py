@@ -281,3 +281,40 @@ class PromptViewSet(viewsets.ModelViewSet):
 
         prompt_obj.save()
         return Response({"similar_questions": resp}, status=status.HTTP_200_OK)
+    
+class JobPostViewSet(viewsets.ModelViewSet):
+    permission_classes= (permissions.IsAuthenticated, )
+    queryset= models.JobPost.objects.all()
+    serializer_class= serializers.JobPostSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        return models.JobPost.objects.filter(
+            organization= self.request.user.organization_set.all()[0]
+        )
+    
+
+    def create(self, request, *args, **kwargs):
+        user= self.request.user
+        serializer= serializers.JobPostCreateSerializer(
+            data= request.data
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user= user, organization= user.organization_set.all()[0])
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = serializers.JobPostCreateSerializer(
+            instance=instance, data=request.data, partial=partial
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance= self.get_object()
+        self.perform_destroy(instance)
+        return Response(status= status.HTTP_200_OK)

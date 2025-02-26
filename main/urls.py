@@ -8,7 +8,8 @@ from .views import (
     NoteViewSet,
     PromptViewSet,
     BlockNoteViewSet,
-    ChannelViewSet
+    ChannelViewSet,
+    JobPostViewSet
 )
 
 router = DefaultRouter()
@@ -18,6 +19,7 @@ router.register(r'blocknotes', BlockNoteViewSet, basename='blocknote')
 router.register(r"note", NoteViewSet, basename="note")
 router.register(r"convos", ConvoViewSet, basename="convos")
 router.register(r"promptinputs", PromptViewSet, basename="prompt")  # If this is here
+router.register(r'jobpost', JobPostViewSet, basename="jobpost")
 router.register(r'', ChannelViewSet, basename='channels')
 
 

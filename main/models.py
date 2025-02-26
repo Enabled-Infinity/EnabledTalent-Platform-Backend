@@ -360,3 +360,45 @@ class PromptFeedback(models.Model):
 
     def __str__(self):
         return str(self.user)
+    
+
+WORKPLACE_TYPES= (
+    (1, 'Hybrid'),
+    (2, 'On-Site'),
+    (3, 'Remote')
+)
+
+WORK_TYPES= (
+    (1, 'Full-time'),
+    (2, 'Part-time'),
+    (3, 'Contract'),
+    (4, 'Temperory'),
+    (5, 'Other'),
+    (6, 'Volunteer'),
+    (7, 'Internship')
+)
+
+class Skills(models.Model):
+    name= models.CharField(max_length=100)
+
+    def _str_(self):
+        return self.name
+    
+    class Meta:
+        verbose_name= 'Skills'
+        verbose_name_plural= 'Skills'
+
+class JobPost(models.Model):
+    user= models.ForeignKey(settings.AUTH_USER_MODEL, on_delete= models.CASCADE)
+    organization= models.ForeignKey(Organization, on_delete= models.CASCADE)
+
+    title= models.CharField(max_length=100)
+    job_desc= models.TextField()
+    workplace_type= models.IntegerField(choices=WORKPLACE_TYPES)
+    location= models.CharField(max_length=100)
+    job_type= models.IntegerField(choices=WORK_TYPES)
+    skills= models.ManyToManyField(Skills)
+    created_at= models.DateTimeField(auto_now_add=True)
+
+    def _str_(self):
+        return self.title
