@@ -214,6 +214,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://kleenestar.vercel.app',
     'http://35.183.134.254',
     'https://api.hiremod.io',
+    'http://localhost:3000'
     #'35.183.134.254'
 ]
 
