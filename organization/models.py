@@ -11,10 +11,10 @@ client= OpenAI()
 
 
 INDUSTRIES= (
-    (1, "IT SERVICES"),
-    (2, "Product Based"),
-    (3, "Finance"),
-    (4, "Sport")
+    ("IT SERVICES", "IT SERVICES"),
+    ("Product Based", "Product Based"),
+    ("Finance", "Finance"),
+    ("Sport", "Sport")
 )
 
 # Create your models here.
@@ -22,7 +22,7 @@ class Organization(models.Model):
     root_user= models.OneToOneField(User, on_delete=models.CASCADE,related_name="organization_root_user")
     users= models.ManyToManyField(User)
     name= models.CharField(max_length=100)
-    industry= models.IntegerField(choices=INDUSTRIES)
+    industry= models.CharField(max_length=100, choices=INDUSTRIES)
     #url= models.URLField(unique=True, blank=True, null=True)
     linkedin_url= models.URLField(unique=True, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
