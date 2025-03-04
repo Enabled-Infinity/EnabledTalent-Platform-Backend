@@ -123,10 +123,33 @@ class SkillSerializer(serializers.ModelSerializer):
         fields= ['name']
 
 class JobPostCreateSerializer(serializers.ModelSerializer):
+    skills = serializers.ListField(child=serializers.CharField(), write_only=True)  # Accept skill names as list
+
     class Meta:
-        model= models.JobPost
-        fields= ['title', 'job_desc', 'workplace_type', 'location',
-                 'job_type', 'skills']
+        model = models.JobPost
+        fields = ['title', 'job_desc', 'workplace_type', 'location', 'job_type', 'skills']
+
+    def create(self, validated_data):
+        skill_names = validated_data.pop('skills', [])
+        job_post = models.JobPost.objects.create(**validated_data)
+
+        for name in skill_names:
+            skill, _ = models.Skills.objects.get_or_create(name=name)  
+            job_post.skills.add(skill)
+
+        return job_post
+    
+    def update(self, instance, validated_data):
+        skill_names = validated_data.pop('skills', [])
+        skill_objs = []
+
+        for name in skill_names:
+            skill, _ = models.Skills.objects.get_or_create(name=name)  # Fetch or create skills
+            skill_objs.append(skill)
+
+        instance.skills.set(skill_objs)  # Update ManyToManyField
+        instance.save()
+        return instance
 
 class JobPostSerializer(serializers.ModelSerializer):
     user= UserSerializer()
