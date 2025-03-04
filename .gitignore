@@ -1,5 +1,6 @@
 .env
 env/
+media/
 db.sqlite3
 backends/__init__.py
 backends/__pycache__
