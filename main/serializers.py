@@ -125,7 +125,7 @@ class SkillSerializer(serializers.ModelSerializer):
 class JobPostCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model= models.JobPost
-        fields= ['title', 'job_desc', 'workplace_type', 'location'
+        fields= ['title', 'job_desc', 'workplace_type', 'location',
                  'job_type', 'skills']
 
 class JobPostSerializer(serializers.ModelSerializer):
