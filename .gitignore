@@ -13,7 +13,7 @@ organization/__init__.py
 organization/migrations
 organization/__pycache__
 
-
+db.sqlite3
 users/migrations
 users/__init__.py
 users/__pycache__
