@@ -128,7 +128,7 @@ EMAIL_DEBUG = True
 
 INTERNAL_IPS = [
     "127.0.0.1",
-    "35.183.134.254"
+    ':3.98.127.183'
 ]
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
