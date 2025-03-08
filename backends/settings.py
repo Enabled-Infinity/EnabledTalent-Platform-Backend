@@ -17,7 +17,7 @@ SECRET_KEY = os.environ['SECRET_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*', '35.183.134.254']
+ALLOWED_HOSTS = ['*', '3.98.127.183']
 
 
 # Application definition
@@ -212,7 +212,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     'https://kleenestar.vercel.app',
-    'http://35.183.134.254',
+    'http://3.98.127.183',
     'https://api.hiremod.io',
     'http://localhost:3000'
     #'35.183.134.254'
