@@ -123,31 +123,51 @@ class SkillSerializer(serializers.ModelSerializer):
         fields= ['name']
 
 class JobPostCreateSerializer(serializers.ModelSerializer):
-    skills = serializers.ListField(child=serializers.CharField(), write_only=True)  # Accept skill names as list
+    skills = serializers.ListField(write_only=True)  # Accept skills as list of strings or objects
 
     class Meta:
         model = models.JobPost
         fields = ['title', 'job_desc', 'workplace_type', 'location', 'job_type', 'skills']
 
     def create(self, validated_data):
-        skill_names = validated_data.pop('skills', [])
+        skill_data = validated_data.pop('skills', [])
         job_post = models.JobPost.objects.create(**validated_data)
 
-        for name in skill_names:
-            skill, _ = models.Skills.objects.get_or_create(name=name)  
+        for skill_item in skill_data:
+            # Handle both string format and object format
+            if isinstance(skill_item, dict) and 'name' in skill_item:
+                skill_name = skill_item['name']
+            else:
+                skill_name = skill_item
+            
+            skill, _ = models.Skills.objects.get_or_create(name=skill_name)  
             job_post.skills.add(skill)
 
         return job_post
     
     def update(self, instance, validated_data):
-        skill_names = validated_data.pop('skills', [])
-        skill_objs = []
+        # Update basic fields
+        for attr, value in validated_data.items():
+            if attr != 'skills':
+                setattr(instance, attr, value)
+        
+        # Handle skills if provided
+        if 'skills' in validated_data:
+            skill_data = validated_data.pop('skills', [])
+            skill_objs = []
 
-        for name in skill_names:
-            skill, _ = models.Skills.objects.get_or_create(name=name)  # Fetch or create skills
-            skill_objs.append(skill)
+            for skill_item in skill_data:
+                # Handle both string format and object format
+                if isinstance(skill_item, dict) and 'name' in skill_item:
+                    skill_name = skill_item['name']
+                else:
+                    skill_name = skill_item
+                
+                skill, _ = models.Skills.objects.get_or_create(name=skill_name)
+                skill_objs.append(skill)
 
-        instance.skills.set(skill_objs)  # Update ManyToManyField
+            instance.skills.set(skill_objs)  # Update ManyToManyField
+        
         instance.save()
         return instance
 
