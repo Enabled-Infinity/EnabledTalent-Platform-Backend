@@ -1,5 +1,6 @@
 .env
 env/
+hiremodEnv/
 media/
 db.sqlite3
 backends/__init__.py
