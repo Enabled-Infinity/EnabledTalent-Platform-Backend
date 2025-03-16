@@ -50,9 +50,9 @@ def zoho_auth_callback(request):
         user= request.user
         organization= user.organization_set.all()[0]
         try:
-            zoho_channel= get_channel(channel_type_num=3, organization_id=organization.id)
+            zoho_channel= get_channel(channel_type_num=3, organization=organization)
         except Exception:
-            zoho_channel= create_channel(channel_type_num=3, organization_id=organization.id)
+            zoho_channel= create_channel(channel_type_num=3, organization=organization)
         
         if zoho_channel.credentials is None:
             credentials = APICredentials.objects.create(key_1=access_token, key_2=refresh_token)
@@ -69,7 +69,7 @@ def zoho_auth_callback(request):
 #################################### Fetch Leads from Zoho CRM
 def fetch_zoho_leads(request):
     organization= request.user.organization_set.all()[0]
-    get_data= get_channel(channel_type_num=3, organization_id=organization.id)
+    get_data= get_channel(channel_type_num=3, organization=organization)
     print(get_data.credentials.key_1)
     access_token= get_data.credentials.key_1 ####### it will fetch from database by the requested user
     if not access_token:
@@ -85,7 +85,7 @@ def fetch_zoho_leads(request):
     
 def refresh_the_token(request):
     organization= request.user.organization_set.all()[0]
-    get_channel_data= get_channel(channel_type_num=3, organization_id=organization.id)
+    get_channel_data= get_channel(channel_type_num=3, organization=organization)
     data = {
         "refresh_token": get_channel_data.credentials.key_2, ######### FETCH FROM DATABASE 
         "client_id": CLIENT_ID,

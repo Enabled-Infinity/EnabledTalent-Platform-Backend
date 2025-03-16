@@ -191,6 +191,11 @@ class Channel(models.Model):
                 #self.credentials.delete()
         super().save(*args, **kwargs)
 
+    class Meta:
+        unique_together = ["organization", "channel_type"]
+
+    def __str__(self):
+        return 'xyz'
 
 class CandidateProfile(models.Model):
     resume_file = models.FileField(upload_to='Candidates-Resume', validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
