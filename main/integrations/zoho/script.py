@@ -6,6 +6,11 @@ from django.shortcuts import redirect
 from django.views import View
 from main.models import APICredentials
 from main.integrations.helper import get_channel,create_channel
+
+from rest_framework.decorators import api_view
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import IsAuthenticated,AllowAny
 load_dotenv()
 
 CLIENT_ID = os.getenv("ZOHO_CLIENT_ID")
@@ -14,6 +19,9 @@ REDIRECT_URI = "http://127.0.0.1:8000/api/channels/zoho/auth/callback"
 TOKEN_URL = "https://accounts.zoho.com/oauth/v2/token"
 
 ######################## Redirect to Zoho OAuth authorization page
+@csrf_exempt
+@api_view(("GET",))
+@permission_classes([IsAuthenticated])
 def zoho_auth_init(request):
     auth_url = "https://accounts.zoho.com/oauth/v2/auth"
     params = {
@@ -28,6 +36,9 @@ def zoho_auth_init(request):
     return redirect(redirect_url)
 
 #################################### OAuth callback
+@csrf_exempt
+@api_view(("GET",))
+@permission_classes([IsAuthenticated])
 def zoho_auth_callback(request):
     code = request.GET.get("code")
     if not code:
@@ -63,10 +74,12 @@ def zoho_auth_callback(request):
             zoho_channel.credentials.save()
         zoho_channel.save()
         print("Access_token" + access_token, "refresh_token" + refresh_token)
-        print("Access_toke" + zoho_channel.credentials.key_1, "refresh_token" + zoho_channel.credentials.key_2)
+        print("Access_token" + zoho_channel.credentials.key_1, "refresh_token" + zoho_channel.credentials.key_2)
     return JsonResponse(response.json())
 
 #################################### Fetch Leads from Zoho CRM
+@api_view(("GET",))
+@permission_classes([IsAuthenticated])
 def fetch_zoho_leads(request):
     organization= request.user.organization_set.all()[0]
     get_data= get_channel(channel_type_num=3, organization=organization)
