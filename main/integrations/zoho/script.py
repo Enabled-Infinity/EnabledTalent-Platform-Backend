@@ -99,6 +99,7 @@ def refresh_the_token(request):
     if "access_token" in token_data:
         new_access_token = token_data["access_token"]
         os.getenv["ZOHO_ACCESS_TOKEN"] = new_access_token  ########## SAVE NEW TOKEN AND REPLACE IT WITH ACCESS TOKEN
+        #os.getenv("ZOHO_ACCESS_TOKEN") = new_access_token
         get_channel_data.credentials.key_1= new_access_token
         return JsonResponse({"access_token": new_access_token})
     else:
