@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.views import View
-
+from main.models import APICredentials
+from main.integrations.helper import get_channel,create_channel
 load_dotenv()
 
 CLIENT_ID = os.getenv("ZOHO_CLIENT_ID")
@@ -46,12 +47,31 @@ def zoho_auth_callback(request):
         ################ SAVE THE TOKENS ###########################
         access_token = token_info.get("access_token")
         refresh_token = token_info.get("refresh_token")
-        print("Access_toke" + access_token, "refresh_token" + refresh_token)
+        user= request.user
+        organization= user.organization_set.all()[0]
+        try:
+            zoho_channel= get_channel(channel_type_num=3, organization_id=organization.id)
+        except Exception:
+            zoho_channel= create_channel(channel_type_num=3, organization_id=organization.id)
+        
+        if zoho_channel.credentials is None:
+            credentials = APICredentials.objects.create(key_1=access_token, key_2=refresh_token)
+            zoho_channel.credentials = credentials
+        else:
+            zoho_channel.credentials.key_1= access_token
+            zoho_channel.credentials.key_2= refresh_token
+            zoho_channel.credentials.save()
+        zoho_channel.save()
+        print("Access_token" + access_token, "refresh_token" + refresh_token)
+        print("Access_toke" + zoho_channel.credentials.key_1, "refresh_token" + zoho_channel.credentials.key_2)
     return JsonResponse(response.json())
 
 #################################### Fetch Leads from Zoho CRM
 def fetch_zoho_leads(request):
-    access_token = "aCESStoken" ####### it will fetch from database by the requested user
+    organization= request.user.organization_set.all()[0]
+    get_data= get_channel(channel_type_num=3, organization_id=organization.id)
+    print(get_data.credentials.key_1)
+    access_token= get_data.credentials.key_1 ####### it will fetch from database by the requested user
     if not access_token:
         access_token = refresh_the_token()
         if not access_token:
@@ -64,9 +84,10 @@ def fetch_zoho_leads(request):
     
     
 def refresh_the_token(request):
-
+    organization= request.user.organization_set.all()[0]
+    get_channel_data= get_channel(channel_type_num=3, organization_id=organization.id)
     data = {
-        "refresh_token": "FETCH FROM DATABASE", ######### FETCH FROM DATABASE 
+        "refresh_token": get_channel_data.credentials.key_2, ######### FETCH FROM DATABASE 
         "client_id": CLIENT_ID,
         "client_secret": CLIENT_SECRET,
         "grant_type": "refresh_token"
@@ -78,6 +99,7 @@ def refresh_the_token(request):
     if "access_token" in token_data:
         new_access_token = token_data["access_token"]
         os.getenv["ZOHO_ACCESS_TOKEN"] = new_access_token  ########## SAVE NEW TOKEN AND REPLACE IT WITH ACCESS TOKEN
+        get_channel_data.credentials.key_1= new_access_token
         return JsonResponse({"access_token": new_access_token})
     else:
         return JsonResponse({"error": "Failed to refresh access token", "details": token_data}, status=400)

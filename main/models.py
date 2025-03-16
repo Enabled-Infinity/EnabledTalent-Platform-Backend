@@ -167,6 +167,8 @@ class APICredentials(models.Model):
 class Channel(models.Model):
     CHANNEL_TYPES = (
         (1, "WorkDay"),
+        (2, "Bamboo"),
+        (3,"Zoho"),
     )
     channel_type= models.IntegerField(choices=CHANNEL_TYPES)
     organization= models.ForeignKey(Organization, on_delete=models.CASCADE)
