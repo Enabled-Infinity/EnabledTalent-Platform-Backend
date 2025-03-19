@@ -83,11 +83,10 @@ def query_candidates(query: str):
     results = agent_executor.invoke({"messages": [HumanMessage(content=query)]})
     # Extract and return results
     outputs = [str(result.content) for result in results['messages'] if isinstance(result, ToolMessage)]
-    print(outputs,'efrefr')
     return outputs
 
 
-
+"""
 def chat_with_assistant(query: str):    
     # First, check if this is a candidate search query
     candidate_results = query_candidates(query)
@@ -109,3 +108,4 @@ def chat_with_assistant(query: str):
     )
 
     return response.choices[0].message.content
+"""

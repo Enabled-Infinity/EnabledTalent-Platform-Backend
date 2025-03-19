@@ -206,10 +206,10 @@ class PromptViewSet(viewsets.ModelViewSet):
 
         # This logic for thread creation and one iside of generate_inghts_with_gpt4 doesnt make sense
         if history_counts >= 2:
-            print("2-1")
+            print("Thread Retrieved!")
             thread = client.beta.threads.retrieve(thread_id=convo.thread_id)
         else:
-            print("2-2")
+            print("New Thread Initiated!")
             thread = client.beta.threads.create()
             convo.thread_id = thread.id
             convo.save()
@@ -220,7 +220,7 @@ class PromptViewSet(viewsets.ModelViewSet):
             channel_name=channel_name,
             file=prompt_instance.file_query or None,
         )
-        print(response_data.get("text", None),'fre')
+        print(response_data.get("text", None),  '<--- Response-Data')
         prompt_instance.response_text= response_data.get("text", None)
         prompt_instance.response_file= response_data.get("image", None)
         prompt_instance.save()

@@ -112,7 +112,6 @@ def generate_insights_with_gpt4(user_query: str, convo: int, channel_name, file=
     create_message_with_or_without_file(file, user_query, thread)
     for context in rag_context:
         print(context)
-        print(type(context))
         rag_message = client.beta.threads.messages.create(
             thread_id=thread.id,
             role="user",
@@ -124,13 +123,13 @@ def generate_insights_with_gpt4(user_query: str, convo: int, channel_name, file=
     assistant_response = all_messages.data[0].content[0]
 
     if isinstance(assistant_response, TextContentBlock):
-        print("block-1")
+        print("Text Response Block")
         return {
             "text": assistant_response.text.value
         }
 
     elif isinstance(assistant_response, ImageFileContentBlock):
-        print("block-2")
+        print("Image Response Block")
         file_content= client.files.content(
             assistant_response.image_file.file_id
         ).content
@@ -337,7 +336,7 @@ class Prompt(models.Model):
     text_query= models.TextField(max_length=10_000)
     file_query= models.FileField(upload_to='Prompts-File/', blank=True,null=True)
     
-    response_text=  models.TextField(max_length=10_000,blank=True, null=True, default='This is a dummy stored msg just for the sake of showing')  #GPT generated response
+    response_text=  models.TextField(blank=True, null=True)  #GPT generated response
     similar_questions= models.JSONField(blank=True, null=True)
     chart_data= models.JSONField(null=True, blank=True)#must be jsonfield
     created_at= models.DateTimeField(auto_now_add=True)
