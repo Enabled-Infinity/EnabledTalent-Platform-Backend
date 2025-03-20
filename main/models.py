@@ -50,7 +50,7 @@ def followup_questions(query, output):
 
     with client.beta.threads.runs.stream(
         thread_id=thread.id,
-        assistant_id="asst_3eiLzVA3bmfmqZZjHW3GZtKS",
+        assistant_id="asst_2MMCYqgiVR1kclQUqQaiwZKk",
         event_handler=EventHandler(),
     ) as stream:
         stream.until_done()
@@ -109,18 +109,58 @@ def generate_insights_with_gpt4(user_query: str, convo: int, channel_name, file=
         get_convo.thread_id = thread.id
         get_convo.save()
     
+    # Step 1: Create the user message
     create_message_with_or_without_file(file, user_query, thread)
+    # Step 2: Add RAG context as system messages
     for context in rag_context:
         print(context)
         rag_message = client.beta.threads.messages.create(
             thread_id=thread.id,
             role="user",
-            content="This is a system message and doesn't come from user. For answering questions use these data"+context,
-            metadata={'message_type': 'this is rag input'}
+            content=f"""
+This is a recruitment database result. As the AI recruitment assistant, use this candidate data to help answer the recruiter's query: 
+
+{context}
+
+When responding, maintain a professional tone suitable for HR/recruitment contexts, focus on factual information, and highlight the most relevant candidate details for the recruiter's query.
+""",
+            metadata={'message_type': 'rag_context'}
         )
 
+    # Step 3: Create a run to process the messages with the assistant
+    # You need to replace "your_assistant_id" with your actual OpenAI Assistant ID
+    assistant_id = get_convo.organization.assistant_id  # Using the assistant ID found in followup_questions function
+    
+    run = client.beta.threads.runs.create(
+        thread_id=thread.id,
+        assistant_id=assistant_id
+    )
+    
+    # Step 4: Wait for the run to complete
+    while True:
+        run_status = client.beta.threads.runs.retrieve(
+            thread_id=thread.id,
+            run_id=run.id
+        )
+        if run_status.status == 'completed':
+            break
+        elif run_status.status in ['failed', 'cancelled', 'expired']:
+            raise Exception(f"Run failed with status: {run_status.status}")
+        import time
+        time.sleep(1)  # Sleep to avoid excessive API calls
+    
+    # Step 5: Get the assistant's response (should be the latest message)
     all_messages = client.beta.threads.messages.list(thread_id=thread.id)
-    assistant_response = all_messages.data[0].content[0]
+    
+    # Find the first message from the assistant (which should be the response to our query)
+    assistant_response = None
+    for message in all_messages.data:
+        if message.role == "assistant":
+            assistant_response = message.content[0]
+            break
+    
+    if not assistant_response:
+        raise Exception("No assistant response found after run completed")
 
     if isinstance(assistant_response, TextContentBlock):
         print("Text Response Block")

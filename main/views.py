@@ -202,18 +202,7 @@ class PromptViewSet(viewsets.ModelViewSet):
         # Create Prompt instance but do not save it yet
         prompt_instance = serializer.save(convo=convo, author=request.user)
 
-        history_counts = convo.prompt_set.all().count()
-
-        # This logic for thread creation and one iside of generate_inghts_with_gpt4 doesnt make sense
-        if history_counts >= 2:
-            print("Thread Retrieved!")
-            thread = client.beta.threads.retrieve(thread_id=convo.thread_id)
-        else:
-            print("New Thread Initiated!")
-            thread = client.beta.threads.create()
-            convo.thread_id = thread.id
-            convo.save()
-
+        # No need to check history count or create thread here as it's handled in generate_insights_with_gpt4
         response_data = generate_insights_with_gpt4(
             user_query=prompt_instance.text_query,
             convo=convo.id,
@@ -271,7 +260,7 @@ class PromptViewSet(viewsets.ModelViewSet):
         serializer.save(prompt=prompt)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @action(methods=("POST",), detail=True, url_path="create-note")
+    @action(methods=("POST",), detail=True, url_path="follow-up-questions")
     def get_follow_up_questions(self, request, pk):
         prompt_obj = get_object_or_404(models.Prompt, id=pk)
 

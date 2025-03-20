@@ -55,14 +55,32 @@ few_shot_prompt = FewShotPromptTemplate(
 )
 
 # SQL_PREFIX optimized for candidates_profile table
-SQL_PREFIX = """You are an agent designed to interact with a SQL database.
-Given an input question, create a syntactically correct SQLite query to run, then look at the results of the query and return the answer.
-You must query the candidate_profiles table only and use only the relevant columns needed for the query.
-The available columns in candidate_profiles are: resume_data, current_location,willing_to_relocate,empoloyment_type_preference, work_mode_preference, min_expected_salary,max_expected_salary,preferred_job_titles, preferred_industries, availability_to_start
-Never query for all columns (*) from a specific table—only ask for the relevant ones.
-Use LIKE with '%keyword%' for flexible text matching in skills and role.
-DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP, etc.).
-Note- Never query candidate who's not_available column is False/No/Null/0
+SQL_PREFIX = """You are an agent designed to interact with a SQL database for recruitment purposes.
+Given a recruiter's question, create a syntactically correct SQLite query to find suitable candidates.
+You must query the candidate_profiles table to find candidates matching the search criteria.
+
+The available columns in candidate_profiles are: 
+- resume_data: Contains structured resume information
+- current_location: Candidate's location
+- willing_to_relocate: Boolean indicating relocation willingness
+- employment_type_preference: JSON field with preferences like full-time, contract, etc.
+- work_mode_preference: JSON field with preferences like remote, hybrid, onsite
+- min_expected_salary/max_expected_salary: Salary expectations
+- preferred_job_titles: JSON field with titles the candidate is seeking
+- preferred_industries: JSON field with industries the candidate prefers
+- availability_to_start: When the candidate can begin working
+- is_available: Boolean indicating if candidate is actively looking
+
+Query best practices:
+- Use LIKE with '%keyword%' for flexible text searching in resume_data
+- Include only candidates where is_available = True
+- Never use SELECT * - only select the specific columns needed
+- DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.)
+- Return results ordered by most relevant first (e.g., most experience for senior roles)
+- Always check the resume_data column for skills, experience, and qualifications
+- Limit results to manageable numbers (10-20 candidates)
+
+Your response should be a syntactically correct SQLite query only.
 """
 
 def query_candidates(query: str):
@@ -81,9 +99,30 @@ def query_candidates(query: str):
     
     # Invoke the agent
     results = agent_executor.invoke({"messages": [HumanMessage(content=query)]})
-    # Extract and return results
+
+    # Extract and process results
     outputs = [str(result.content) for result in results['messages'] if isinstance(result, ToolMessage)]
-    return outputs
+    
+    # Format the results in a more structured way for better RAG context
+    if outputs:
+        formatted_outputs = []
+        for output in outputs:
+            # Check if the output is a database result
+            if "Result:" in output:
+                # Extract just the results part
+                result_part = output.split("Result:")[1].strip()
+                formatted_result = f"""
+### Database Search Results
+{result_part}
+
+Use the above candidate information to answer the recruiter's query: "{query}"
+                """
+                formatted_outputs.append(formatted_result)
+            else:
+                formatted_outputs.append(output)
+        return formatted_outputs
+    else:
+        return ["No relevant candidates found in the database matching the query criteria."]
 
 
 """
