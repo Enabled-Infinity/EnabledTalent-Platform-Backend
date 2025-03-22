@@ -69,7 +69,8 @@ urlpatterns = [
 
     path('zoho/auth/', zoho_auth_init, name='zoho_auth_init'),
     path('zoho/auth/callback/', zoho_auth_callback, name='zoho_auth_callback'),
-    path('zoho/leads/', fetch_zoho_leads, name='fetch_zoho_leads'),
+    path("zoho/revoke", revoke_zoho_token, name="revoke_zoho_token"),
+    path('zoho/candidates', fetch_zoho_recruit_candidates, name='fetch_zoho_recruit_candidates')
 ]
 urlpatterns += router.urls
 websocket_urlpatterns = [path("api/ws/", ChatConsumer.as_asgi())]
