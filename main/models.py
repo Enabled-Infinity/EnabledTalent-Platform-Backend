@@ -15,20 +15,51 @@ from openai.types.beta.threads.image_file_content_block import ImageFileContentB
 from openai.types.beta.threads.image_url_content_block import ImageURLContentBlock
 from openai.types.beta.threads.text_content_block import TextContentBlock
 from .agent import query_candidates
+from typing_extensions import override
 
 load_dotenv()
+
 client = OpenAI()
+channel_layer= get_channel_layer()
 
 class EventHandler(AssistantEventHandler):
-    def on_tool_call_delta(self, delta, snapshot):
-        if delta.type == "code_interpreter":
-            if delta.code_interpreter.input:
-                print(delta.code_interpreter.input, end="", flush=True)
-            if delta.code_interpreter.outputs:
-                print("\n\noutput >", flush=True)
-                for output in delta.code_interpreter.outputs:
-                    if output.type == "logs":
-                        print(f"\n{output.logs}", flush=True)
+  def __init__(self, *, user, thread, stream_ws=False):
+    self.user = user
+    self.thread = thread
+    self.stream_ws = stream_ws
+    super().__init__()
+
+  @override
+  def on_text_created(self, text) -> None:
+    print("STARTED.....")
+    print(f"\nassistant > ", end="", flush=True)
+    self.user.refresh_from_db()
+      
+  @override
+  def on_text_delta(self, delta, snapshot):
+    print("received.....")
+    print("CHANNEL NAME", self.user.ws_channel_name)
+    print(delta.value, end="", flush=True)
+    if self.user.ws_channel_name and self.stream_ws:
+      async_to_sync(channel_layer.send)(self.user.ws_channel_name, {"type": "prompt_text_receive", "data": {"text": delta.value}})
+      
+  def on_tool_call_created(self, tool_call):
+    print(f"\nassistant > {tool_call.type}\n", flush=True)
+
+    
+  def on_end(self):
+        # Retrieve messages added by the Assistant to the thread
+    all_messages = client.beta.threads.messages.list(
+        thread_id=self.thread.id
+    )
+
+    # Return the content of the first message added by the Assistant
+    assistant_response= all_messages.data[0].content[0]
+    return {'text': assistant_response.text.value}
+
+
+      
+
 
 def parse_followup_questions(text):
     arr = []
@@ -79,7 +110,7 @@ def create_message_with_or_without_file(file, user_query, thread):
             attachments=[
                 {
                     "file_id": message_file.id,
-                    "tools": [{"type": "file_search"}, {"type": "code_interpreter"}],
+                    "tools": [{"type": "file_search"}],
                 }
             ],
         )
@@ -93,13 +124,12 @@ def create_message_with_or_without_file(file, user_query, thread):
     return message
 
 
-def generate_insights_with_gpt4(user_query: str, convo: int, channel_name, file=None):
+def generate_insights_with_gpt4(user_query: str, convo: int, file=None, *, user) :
     get_convo = get_object_or_404(Convo, id=convo)
     history = get_convo.prompt_set.all()
     all_prompts = history.count()
 
     rag_context= query_candidates(user_query)
-    print('this-is-rag-contextttt', rag_context)
 
     if all_prompts >= 2:  # system prompt counts as a prompt
         thread = client.beta.threads.retrieve(thread_id=get_convo.thread_id)
@@ -126,69 +156,26 @@ When responding, maintain a professional tone suitable for HR/recruitment contex
 """,
             metadata={'message_type': 'rag_context'}
         )
-
+    event_handler = EventHandler(user= user, thread= thread, stream_ws=True)
     # Step 3: Create a run to process the messages with the assistant
     # You need to replace "your_assistant_id" with your actual OpenAI Assistant ID
     assistant_id = get_convo.organization.assistant_id  # Using the assistant ID found in followup_questions function
-    
-    run = client.beta.threads.runs.create(
-        thread_id=thread.id,
-        assistant_id=assistant_id
+    with client.beta.threads.runs.stream(
+    thread_id=thread.id,
+    assistant_id=assistant_id,
+    event_handler=event_handler,
+    ) as stream:
+        stream.until_done()
+     # Retrieve messages added by the Assistant to the thread
+    all_messages = client.beta.threads.messages.list(
+        thread_id=thread.id
     )
+
+    # Return the content of the first message added by the Assistant
+    assistant_response= all_messages.data[0].content[0]
+    return {'text': assistant_response.text.value}
     
     # Step 4: Wait for the run to complete
-    while True:
-        run_status = client.beta.threads.runs.retrieve(
-            thread_id=thread.id,
-            run_id=run.id
-        )
-        if run_status.status == 'completed':
-            break
-        elif run_status.status in ['failed', 'cancelled', 'expired']:
-            raise Exception(f"Run failed with status: {run_status.status}")
-        import time
-        time.sleep(1)  # Sleep to avoid excessive API calls
-    
-    # Step 5: Get the assistant's response (should be the latest message)
-    all_messages = client.beta.threads.messages.list(thread_id=thread.id)
-    
-    # Find the first message from the assistant (which should be the response to our query)
-    assistant_response = None
-    for message in all_messages.data:
-        if message.role == "assistant":
-            assistant_response = message.content[0]
-            break
-    
-    if not assistant_response:
-        raise Exception("No assistant response found after run completed")
-
-    if isinstance(assistant_response, TextContentBlock):
-        print("Text Response Block")
-        return {
-            "text": assistant_response.text.value
-        }
-
-    elif isinstance(assistant_response, ImageFileContentBlock):
-        print("Image Response Block")
-        file_content= client.files.content(
-            assistant_response.image_file.file_id
-        ).content
-        image_file= ContentFile(file_content, name=f"{uuid.uuid4()}.png")
-
-        # Handle response with both image and text
-        if "text" in assistant_response.type:
-            return {
-                "text": assistant_response.text.value,
-                "image": image_file
-            }
-        # Handle response with image only
-        return {"image": image_file}
-
-    elif isinstance(assistant_response, ImageURLContentBlock):
-        raise Exception("received ImageURLContentBlock, unable to process this...")
-
-    else:
-        raise Exception(f"Unhandled content block type: {type(assistant_response)}")
 
 class APICredentials(models.Model):
     key_1= models.CharField(max_length=255,null=True, blank=True)

@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from . import models,serializers
 from django.shortcuts import get_object_or_404
+from channels.layers import get_channel_layer
 from datetime import datetime
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -187,6 +188,7 @@ class PromptViewSet(viewsets.ModelViewSet):
         return convo.prompt_set.all()  # Return prompts associated with the
 
     def create(self, request, *args, **kwargs):
+        channel_layer = get_channel_layer()
         start_time = datetime.now()
         serializer = serializers.PromptCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -206,11 +208,12 @@ class PromptViewSet(viewsets.ModelViewSet):
         response_data = generate_insights_with_gpt4(
             user_query=prompt_instance.text_query,
             convo=convo.id,
-            channel_name=channel_name,
             file=prompt_instance.file_query or None,
+            user=request.user
         )
         print(response_data.get("text", None),  '<--- Response-Data')
         prompt_instance.response_text= response_data.get("text", None)
+        print(prompt_instance.response_text)
         prompt_instance.response_file= response_data.get("image", None)
         prompt_instance.save()
 
@@ -218,15 +221,7 @@ class PromptViewSet(viewsets.ModelViewSet):
 
         print(f"Time taken: {end_time - start_time}")
 
-        # TODO: Need to send related document in response.
-        return Response(
-            {
-                "id": prompt_instance.id,
-                "text_query": prompt_instance.text_query,
-                "response_text": prompt_instance.response_text,
-            },
-            status=status.HTTP_201_CREATED,
-        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop("partial", False)

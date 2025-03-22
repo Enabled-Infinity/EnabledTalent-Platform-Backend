@@ -22,8 +22,8 @@ class ChatConsumer(WebsocketConsumer):
         if user.is_anonymous:
             return
 
-        user.ws_channel_name = None
-        user.last_online = timezone.now()
+        user.ws_channel_name= None
+        user.last_online= timezone.now()
         user.save()
 
     def dispatch_named_event(self, event_name, payload):
@@ -36,7 +36,7 @@ class ChatConsumer(WebsocketConsumer):
 
     def prompt_text_receive(self, event):
         self.dispatch_named_event("PROMPT_TEXT_RECEIVE", event["data"])
-        # self.close()
+
 
     def test(self, event):
         self.dispatch_named_event("test", {})
