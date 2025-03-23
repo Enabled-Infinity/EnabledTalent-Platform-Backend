@@ -60,15 +60,12 @@ Given a recruiter's question, create a syntactically correct SQLite query to fin
 You must query the candidate_profiles table to find candidates matching the search criteria.
 
 The available columns in candidate_profiles are: 
-- resume_data: Contains structured resume information
-- current_location: Candidate's location
+- resume_data: Contains whole information about the candidate in structured resume information
 - willing_to_relocate: Boolean indicating relocation willingness
 - employment_type_preference: JSON field with preferences like full-time, contract, etc.
 - work_mode_preference: JSON field with preferences like remote, hybrid, onsite
-- min_expected_salary/max_expected_salary: Salary expectations
-- preferred_job_titles: JSON field with titles the candidate is seeking
-- preferred_industries: JSON field with industries the candidate prefers
-- availability_to_start: When the candidate can begin working
+- has_workvisa: Boolean indicating candidate does have workvisa or not
+- expected_salary_range: Salary expectations
 - is_available: Boolean indicating if candidate is actively looking
 
 Query best practices:
@@ -77,7 +74,7 @@ Query best practices:
 - Never use SELECT * - only select the specific columns needed
 - DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.)
 - Return results ordered by most relevant first (e.g., most experience for senior roles)
-- Always check the resume_data column for skills, experience, and qualifications
+- Always check the resume_data column for skills, experience, and qualifications or any data related to candidate
 - Limit results to manageable numbers (10-20 candidates)
 
 Your response should be a syntactically correct SQLite query only.
