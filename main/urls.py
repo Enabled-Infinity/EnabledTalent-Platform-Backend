@@ -10,12 +10,14 @@ from .views import (
     PromptViewSet,
     BlockNoteViewSet,
     ChannelViewSet,
-    JobPostViewSet
+    JobPostViewSet,
+    CandidateViewSet
 )
 
 router = DefaultRouter()
 # Register viewsets with the router
 
+router.register(r'candidate', CandidateViewSet, basename="candidates")
 router.register(r'blocknotes', BlockNoteViewSet, basename='blocknote')
 router.register(r"note", NoteViewSet, basename="note")
 router.register(r"convos", ConvoViewSet, basename="convos")
