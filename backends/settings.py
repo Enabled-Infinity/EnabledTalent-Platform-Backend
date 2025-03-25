@@ -93,7 +93,10 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 
-CSRF_COOKIE_SECURE= True
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_HTTPONLY = False
 
 ROOT_URLCONF = 'backends.urls'
 
@@ -218,6 +221,8 @@ REST_FRAMEWORK = {
 CORS_ALLOW_HEADERS = [
     'X-CSRFToken',  # Add any other headers you need to allow
     'Content-Type',  # Include Content-Type header
+    'Accept',
+    'Authorization',
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -227,7 +232,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://3.96.209.161',
     'https://api.hiremod.io',
     'http://localhost:3000',
-    'https://hiremod.vercel.app'
+    'https://hiremod.vercel.app',
     #'35.183.134.254'
 ]
 
