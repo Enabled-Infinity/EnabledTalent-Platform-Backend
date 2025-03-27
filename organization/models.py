@@ -11,10 +11,18 @@ client= OpenAI()
 
 
 INDUSTRIES= (
-    ("IT SERVICES", "IT SERVICES"),
-    ("Product Based", "Product Based"),
-    ("Finance", "Finance"),
-    ("Sport", "Sport")
+    (1, "IT SERVICES"),
+    (2, "Product Based"),
+    (3, "Finance"),
+    (4, "Sport")
+)
+
+COMPANY_SIZING= (
+    (1, "1-10"),
+    (2, "100-100"),
+    (3, "100-500"),
+    (4, "500-1000"),
+    (5, "1000+")
 )
 
 # Recruitment assistant instructions
@@ -43,14 +51,16 @@ Remember that you're helping recruitment professionals make important hiring dec
 # Create your models here.
 class Organization(models.Model):
     root_user= models.OneToOneField(User, on_delete=models.CASCADE,related_name="organization_root_user")
+    headquarter_location= models.CharField(max_length=100)
+    about= models.TextField()
+    employee_size= models.IntegerField(choices=COMPANY_SIZING)
     users= models.ManyToManyField(User)
     name= models.CharField(max_length=100)
-    industry= models.CharField(max_length=100, choices=INDUSTRIES)
+    industry= models.IntegerField(choices=INDUSTRIES)
     assistant_id = models.CharField(max_length=40,blank=True)
-    #url= models.URLField(unique=True, blank=True, null=True)
+    url= models.URLField(unique=True, blank=True, null=True)
     linkedin_url= models.URLField(unique=True, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    """
     avatar= models.ImageField(
         upload_to='organization-avatars', 
         default='default-org.jpeg',
@@ -58,7 +68,6 @@ class Organization(models.Model):
         blank=True,
         validators=[validate_image_file_extension],
     )
-    """
     def __str__(self):
         return self.name
 

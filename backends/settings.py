@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'main',
     'organization',
     'users',
+    'candidates',
     'django_celery_beat',
     'django_celery_results',
 ]

@@ -1,6 +1,4 @@
-import fitz  # PyMuPDF
 from django.db import models
-from django.core.validators import FileExtensionValidator,validate_image_file_extension
 from openai import OpenAI
 from organization.models import Organization
 from dotenv import load_dotenv
@@ -9,14 +7,8 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.shortcuts import get_object_or_404
 from django.conf import settings
-import uuid
-from django.core.files.base import ContentFile
-from openai.types.beta.threads.image_file_content_block import ImageFileContentBlock
-from openai.types.beta.threads.image_url_content_block import ImageURLContentBlock
-from openai.types.beta.threads.text_content_block import TextContentBlock
 from .agent import query_candidates
 from typing_extensions import override
-from django.utils.text import slugify
 
 load_dotenv()
 
@@ -224,37 +216,7 @@ class Channel(models.Model):
     def __str__(self):
         return 'xyz'
 
-class CandidateProfile(models.Model):
-    organization= models.ForeignKey(Organization, on_delete= models.CASCADE, blank=True, null=True)
-    resume_file= models.FileField(upload_to='Candidates-Resume', validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
-    resume_data= models.JSONField(blank=True, null=True) 
-    willing_to_relocate= models.BooleanField(default=True)
-    slug= models.SlugField(max_length=255, unique=True, blank=True)
-
-    employment_type_preferences= models.JSONField(default=list)
-    work_mode_preferences= models.JSONField(default=list)
-    has_workvisa= models.BooleanField(default=False)  # No null=True needed
-
-    expected_salary_range = models.CharField(max_length=20, blank=True, null=True)
-    video_pitch_url = models.FileField(upload_to='Candidates-VideoPitches', validators=[FileExtensionValidator(allowed_extensions=['mp4','mov','wmv','avi','avchd','flv','f4v','swf','mkv'])],
-                                       null=True, blank=True)
-    is_available = models.BooleanField(default=True)
-
-    def __str__(self):
-        return f"Candidate"
-    
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            # Create a unique slug based on title and a random string
-            base_slug = slugify(self.resume_file.name)
-            unique_id = str(uuid.uuid4())[:8]  # Use first 8 chars of UUID
-            self.slug = f"{base_slug}-{unique_id}"
-        super().save(*args, **kwargs)
-    
-    class Meta:
-        ordering= ['organization', 'id']
-    
-
+  
 COLOR_CHOICES = (
     ("default","default"),
     ("red","red"),
@@ -387,6 +349,7 @@ class JobPost(models.Model):
     location= models.CharField(max_length=100)
     job_type= models.IntegerField(choices=WORK_TYPES)
     skills= models.ManyToManyField(Skills)
+    estimated_salary= models.CharField(max_length=100)
     created_at= models.DateTimeField(auto_now_add=True)
 
     def _str_(self):

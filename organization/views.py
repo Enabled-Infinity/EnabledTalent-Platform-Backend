@@ -4,7 +4,6 @@ from rest_framework.response import Response
 from .models import create_organization_invite as create_org_invite
 from django.core.mail import send_mail
 import os
-from .permissions import OrganizationViewSetPermissions
 
 # from . import permissions
 from rest_framework import permissions

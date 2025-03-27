@@ -85,3 +85,4 @@ def process_resume(resume_slug: str, file_path: str) -> None:
     print(resume)
     resume.resume_data = data
     resume.save()
+    print(resume.resume_data)

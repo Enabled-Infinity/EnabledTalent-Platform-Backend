@@ -4,7 +4,6 @@ from marker.models import create_model_dict
 from marker.output import text_from_rendered
 from pydantic import BaseModel
 from openai import OpenAI
-import json
 import os
 from dotenv import load_dotenv
 

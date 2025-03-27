@@ -1,0 +1,252 @@
+from django.urls import path
+from rest_framework import viewsets, status
+from rest_framework import permissions
+from rest_framework.views import APIView
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from . import models,serializers
+from rest_framework.parsers import FormParser, MultiPartParser,JSONParser
+from datetime import datetime
+from django.shortcuts import get_object_or_404
+from rest_framework import pagination
+from channels.layers import get_channel_layer
+
+class CandidateViewSet(viewsets.ModelViewSet):
+    permission_classes= (permissions.IsAuthenticated,)
+    serializer_class= serializers.CandidateProfileSerializer
+    queryset= models.CandidateProfile.objects.all()
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    lookup_field = 'slug'  # Use slug instead of id for lookups
+
+    def get_queryset(self):
+        print(self.request.user)
+        return models.CandidateProfile.objects.filter(user= self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        serializer=  serializers.CreateCandidateProfileSerializer(
+            data= request.data
+        )
+        serializer.is_valid(raise_exception=True)
+        if self.request.user.is_authenticated:
+            instance = serializer.save(user= self.request.user)
+        else:
+            instance = serializer.save()
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    """
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = ResumeCreateSerializer(instance=instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    """
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_200_OK)
+
+    @action(methods=("POST",), detail=True, url_path="create-notes", parser_classes=[MultiPartParser, FormParser, JSONParser])
+    def create_note(self, request, slug):
+        print('efef')
+        get_resume = self.get_object()
+        print(get_resume)
+        serializer = serializers.CreateNoteSerializer(
+            data = request.data
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save(resume=get_resume)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+from .serializers import PromptSerializer, PromptResponseSerializer
+from .models import conversation_threads,get_resume_context
+import uuid
+
+class PromptAPI(APIView):
+    permission_classes = (permissions.AllowAny,)
+    
+    def post(self, request):
+        serializer = PromptSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        
+        data = serializer.validated_data
+        thread_id = data.get('thread_id')
+        
+        # Get or create thread
+        if thread_id and thread_id in conversation_threads:
+            messages = conversation_threads[thread_id]
+        else:
+            # Generate a new thread ID
+            thread_id = str(uuid.uuid4())
+            messages = None
+        
+        # Get response from LLM
+        result = get_resume_context(
+            resume_slug=data['resume_slug'],  # Changed from resume_id
+            user_query=data['input_text'],
+            thread_id=thread_id,
+            messages=messages
+        )
+        
+        # Store updated conversation in memory
+        conversation_threads[thread_id] = result['messages']
+        
+        # Return the response
+        response_serializer = PromptResponseSerializer({
+            'output': result['response'],
+            'thread_id': thread_id
+        })
+        
+        return Response(response_serializer.data)
+    
+
+class NoteViewSet(viewsets.ModelViewSet):
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = serializers.CreateNoteSerializer
+    queryset = models.Notes.objects.all()
+    
+    def get_queryset(self):
+        user = self.request.user
+        return models.Notes.objects.filter(resume__user=user)
+    
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = serializers.CreateNoteSerializer(instance=instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # Check if the authenticated user is the owner of the note's resume
+        if request.user != instance.resume.user:
+            return Response({"detail": "You do not have permission to delete this note."}, 
+                            status=status.HTTP_403_FORBIDDEN)
+        
+        self.perform_destroy(instance)
+        return Response({"detail": "Note deleted"}, status=status.HTTP_204_NO_CONTENT)
+    
+
+class CustomPagination(pagination.PageNumberPagination):
+    page_size = 10
+
+class CandidateConvoViewSet(viewsets.ModelViewSet):
+    queryset = models.CandidateConvo.objects.all()
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = serializers.CandidateConvoSerializer
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        return models.CandidateConvo.objects.filter(user=self.request.user)
+    
+    def create(self, request, *args, **kwargs):
+        serializer = serializers.CandidateConvoCreateSerializer(
+            data=request.data
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = serializers.CandidateConvoCreateSerializer(
+            instance=instance, data=request.data, partial=partial
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        
+        # Create a new conversation if this was the last one
+        if models.CandidateConvo.objects.filter(user=request.user).count() < 1:
+            models.CandidateConvo.objects.create(
+                user=request.user,
+            )
+            
+        return Response(status=status.HTTP_200_OK)
+
+class CandidatePromptViewSet(viewsets.ModelViewSet):
+    permission_classes = (permissions.IsAuthenticated,)
+    queryset = models.CandidatePrompt.objects.all().order_by("-created_at")
+    serializer_class = serializers.CandidatePromptSerializer
+
+    def get_queryset(self, *args, **kwargs):
+        convo_id = self.kwargs.get("pk")  # Retrieve 'pk' from URL kwargs
+        convo = get_object_or_404(models.CandidateConvo, id=convo_id)
+        return convo.candidateprompt_set.all()
+
+    def create(self, request, *args, **kwargs):
+        channel_layer= get_channel_layer()
+        start_time = datetime.now()
+        serializer = serializers.CandidatePromptCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        convo = get_object_or_404(models.CandidateConvo, pk=self.kwargs["pk"])
+
+        channel_name = request.user.ws_channel_name
+        if not channel_name:
+            return Response(
+                {"detail": "User is not connected to any workspace"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Create Prompt instance but do not save it yet
+        prompt_instance = serializer.save(convo=convo)
+
+        # Generate response using our new function
+        response_data = models.generate_job_insights_with_gpt4(
+            user_query=prompt_instance.text_query,
+            convo_id=convo.id,
+            user=request.user
+        )
+        
+        print(response_data.get("text", None), '<--- Response-Data')
+        prompt_instance.response_text = response_data.get("text", None)
+        prompt_instance.save()
+
+        end_time = datetime.now()
+        print(f"Time taken: {end_time - start_time}")
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = serializers.CandidatePromptCreateSerializer(
+            instance, request.data, partial=partial
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+        
+    @action(methods=("POST",), detail=True, url_path="follow-up-suggestions")
+    def get_follow_up_job_suggestions(self, request, pk):
+        prompt_obj = get_object_or_404(models.CandidatePrompt, id=pk)
+
+        suggestions = models.followup_job_suggestions(
+            query=prompt_obj.text_query, 
+            output=prompt_obj.response_text,
+            user=request.user
+        )
+        
+        # Save the suggestions to the prompt object
+        prompt_obj.similar_jobs = suggestions
+        prompt_obj.save()
+        
+        return Response({"similar_jobs": suggestions}, status=status.HTTP_200_OK)
+
