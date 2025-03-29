@@ -49,7 +49,6 @@ SESSION_COOKIE_AGE = 3600
 SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = True
 
-CSRF_COOKIE_SAMESITE= 'None'
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",

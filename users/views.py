@@ -80,7 +80,7 @@ class LoginView(APIView):
         login(request, user)
 
         response = Response(status=status.HTTP_200_OK)
-        response.set_cookie('loggedIn', 'true', httponly=True, domain="frontend-pulpit.vercel.app")
+        response.set_cookie('loggedIn', 'true', httponly=True)
 
         return response
 
