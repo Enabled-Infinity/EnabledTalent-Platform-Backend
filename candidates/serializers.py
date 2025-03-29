@@ -19,8 +19,8 @@ class CreateCandidateProfileSerializer(serializers.ModelSerializer):
             filename = fs.save(resume_file.name, resume_file)
             file_path = fs.path(filename)
             print("filepath------", file_path)
-            #process_resume.delay(inst.slug, file_path)
-            process_resume(inst.slug, file_path)
+            process_resume.delay(inst.slug, file_path)
+            #process_resume(inst.slug, file_path)
 
         return inst
     

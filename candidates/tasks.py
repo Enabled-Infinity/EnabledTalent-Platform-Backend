@@ -1,4 +1,4 @@
-#from celery import shared_task
+from celery import shared_task
 from pydantic import BaseModel
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -76,7 +76,7 @@ def extract_text_from_pdf(pdf_path):
     return text
 
 
-#@shared_task
+@shared_task
 def process_resume(resume_slug: str, file_path: str) -> None:
     extracted_text = extract_text_from_pdf(file_path)
     structured_data = extract_structured_data(extracted_text)

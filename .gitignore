@@ -3,7 +3,6 @@ env/
 hiremodEnv/
 media/
 db.sqlite3
-backends/__init__.py
 backends/__pycache__
 
 main/__init__.py

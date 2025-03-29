@@ -49,32 +49,6 @@ SESSION_COOKIE_AGE = 3600
 SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = True
 
-if os.getenv("REDIS_HOST"):
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {
-                "hosts": [(os.getenv("REDIS_HOST"), int(os.getenv("REDIS_PORT")))],
-                "channel_capacity": {
-                    "http.request": 200,
-                    "websocket.send*": 20,
-                },
-            },
-        },
-    }
-else:
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
-            "channel_capacity": {
-                "http.request": 200,
-                "websocket.send*": 20,
-                },
-        },
-        },
-    }
 
 
 MIDDLEWARE = [
@@ -132,7 +106,7 @@ EMAIL_DEBUG = True
 
 INTERNAL_IPS = [
     "127.0.0.1",
-    ':3.98.127.183'
+    '3.98.127.183'
 ]
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -242,9 +216,7 @@ CSRF_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-CELERY_BROKER_URL = "redis://localhost:6379/0"
+
 
 # REDIS CONFIGURATION
 CACHES = {
@@ -266,3 +238,15 @@ DJANGO_REDIS_IGNORE_EXCEPTIONS = True
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+#CELERY_BROKER_URL = f"redis://:{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Asia/Kolkata" #change timezone based on server time
+USE_TZ = True
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
