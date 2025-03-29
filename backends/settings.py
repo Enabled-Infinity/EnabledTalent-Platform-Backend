@@ -17,7 +17,7 @@ SECRET_KEY = os.environ['SECRET_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*', '3.96.209.161', 'hiremod.vercel.app']
+ALLOWED_HOSTS = ['*', '3.99.190.148', 'hiremod.vercel.app']
 
 
 # Application definition
@@ -106,7 +106,7 @@ EMAIL_DEBUG = True
 
 INTERNAL_IPS = [
     "127.0.0.1",
-    '3.98.127.183'
+    '3.99.190.148'
 ]
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -204,7 +204,7 @@ CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     'https://kleenestar.vercel.app',
-    'http://3.96.209.161',
+    'http://3.99.190.148',
     'https://api.hiremod.io',
     'http://localhost:3000',
     'https://hiremod.vercel.app',
