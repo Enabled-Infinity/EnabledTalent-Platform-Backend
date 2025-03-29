@@ -27,8 +27,8 @@ class CandidateProfile(models.Model):
     willing_to_relocate= models.BooleanField(default=True)
     slug= models.SlugField(max_length=255, unique=True, blank=True)
 
-    employment_type_preferences= models.JSONField(default=list)
-    work_mode_preferences= models.JSONField(default=list)
+    employment_type_preferences= models.JSONField(default=list, help_text="Array of employment types like ['Full-time', 'Part-time', 'Contract']")
+    work_mode_preferences= models.JSONField(default=list, help_text="Array of work modes like ['Remote', 'On-site', 'Hybrid']")
     has_workvisa= models.BooleanField(default=False)  # No null=True needed
 
     expected_salary_range = models.CharField(max_length=20, blank=True, null=True)
