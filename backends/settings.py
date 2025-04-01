@@ -249,3 +249,14 @@ CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = "Asia/Kolkata" #change timezone based on server time
 USE_TZ = True
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
+
+
+# ---------------------------------------------DJANGO CHANNEL SETTINGS------------------------------------------------------
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
