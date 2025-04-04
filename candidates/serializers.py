@@ -36,7 +36,7 @@ class CandidateProfileSerializer(serializers.ModelSerializer):
     get_all_notes= NoteSerializer(many=True)
     class Meta:
         model= models.CandidateProfile
-        fields= ['user', 'organization','id', 'organization', 'slug', 'resume_file', 'resume_data', 'willing_to_relocate', 'employment_type_preferences',
+        fields= ['user', 'organization','id', 'slug', 'resume_file', 'resume_data', 'willing_to_relocate', 'employment_type_preferences',
                 'work_mode_preferences', 'has_workvisa', 'expected_salary_range', 'video_pitch_url', 'is_available', 'get_all_notes']
         
 
@@ -55,28 +55,3 @@ class PromptSerializer(serializers.Serializer):
 class PromptResponseSerializer(serializers.Serializer):
     output = serializers.CharField()
     thread_id = serializers.CharField()
-
-# New serializers for candidate-side conversations
-class CandidateConvoCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.CandidateConvo
-        fields = ['id', 'title', 'archived']
-        read_only_fields = ['id']
-
-class CandidateConvoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.CandidateConvo
-        fields = ['id', 'title', 'archived', 'created_at']
-        read_only_fields = ['id', 'created_at']
-
-class CandidatePromptCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.CandidatePrompt
-        fields = ['id', 'text_query']
-        read_only_fields = ['id']
-
-class CandidatePromptSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.CandidatePrompt
-        fields = ['id', 'text_query', 'response_text', 'similar_jobs', 'created_at']
-        read_only_fields = ['id', 'response_text', 'similar_jobs', 'created_at']
