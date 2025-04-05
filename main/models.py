@@ -136,7 +136,6 @@ def generate_insights_with_gpt4(user_query: str, convo: int, file=None, *, user)
     create_message_with_or_without_file(file, user_query, thread)
     # Step 2: Add RAG context as system messages
     for context in rag_context:
-        print(context)
         rag_message = client.beta.threads.messages.create(
             thread_id=thread.id,
             role="user",
@@ -146,17 +145,19 @@ This is a recruitment database result. As the AI recruitment assistant, use this
 {context}
 
 When responding, maintain a professional tone suitable for HR/recruitment contexts, focus on factual information, and highlight the most relevant candidate details for the recruiter's query.
+
+IMPORTANT: When referring to a specific candidate, use the format [[resume:/api/candidates/SLUG/]] where SLUG is the candidate's unique identifier (slug field).
 """,
             metadata={'message_type': 'rag_context'}
         )
     event_handler = EventHandler(user= user, thread= thread, stream_ws=True)
     # Step 3: Create a run to process the messages with the assistant
     # You need to replace "your_assistant_id" with your actual OpenAI Assistant ID
-    assistant_id = get_convo.organization.assistant_id  # Using the assistant ID found in followup_questions function
+    assistant_id = get_convo.organization.assistant_id  # Using the assistant ID found in followup_questions function    
     with client.beta.threads.runs.stream(
-    thread_id=thread.id,
-    assistant_id=assistant_id,
-    event_handler=event_handler,
+        thread_id=thread.id,
+        assistant_id=assistant_id,
+        event_handler=event_handler,
     ) as stream:
         stream.until_done()
      # Retrieve messages added by the Assistant to the thread

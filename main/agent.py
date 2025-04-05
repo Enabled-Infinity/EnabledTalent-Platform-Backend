@@ -14,23 +14,23 @@ client= OpenAI()
 examples = [
     {
         "query": "Find backend developers with 3+ years of experience and experience in Python",
-        "sql": "SELECT name, skills, experience FROM candidates_profile WHERE skills LIKE '%backend%' AND skills LIKE '%Python%' AND experience >= 3 ORDER BY experience DESC;"
+        "sql": "SELECT name, skills, experience, slug FROM candidates_profile WHERE skills LIKE '%backend%' AND skills LIKE '%Python%' AND experience >= 3 ORDER BY experience DESC;"
     },
     {
         "query": "Show me marketing specialists with at least 5 years of experience",
-        "sql": "SELECT name, skills, experience FROM candidates_profile WHERE role LIKE '%marketing%' AND experience >= 5 ORDER BY experience DESC;"
+        "sql": "SELECT name, skills, experience, slug FROM candidates_profile WHERE role LIKE '%marketing%' AND experience >= 5 ORDER BY experience DESC;"
     },
     {
         "query": "Find candidates proficient in React and frontend development with 2+ years of experience",
-        "sql": "SELECT name, skills, experience FROM candidates_profile WHERE skills LIKE '%React%' AND skills LIKE '%frontend%' AND experience >= 2 ORDER BY experience DESC;"
+        "sql": "SELECT name, skills, experience, slug FROM candidates_profile WHERE skills LIKE '%React%' AND skills LIKE '%frontend%' AND experience >= 2 ORDER BY experience DESC;"
     },
     {
         "query": "Get Python developers located in Bangalore with 4+ years of experience",
-        "sql": "SELECT name, location, skills, experience FROM candidates_profile WHERE skills LIKE '%Python%' AND location = 'Bangalore' AND experience >= 4 ORDER BY experience DESC;"
+        "sql": "SELECT name, location, skills, experience, slug FROM candidates_profile WHERE skills LIKE '%Python%' AND location = 'Bangalore' AND experience >= 4 ORDER BY experience DESC;"
     },
     {
         "query": "Find UI/UX designers in Delhi with experience in Figma",
-        "sql": "SELECT name, skills, location FROM candidates_profile WHERE role LIKE '%UI/UX%' AND skills LIKE '%Figma%' AND location = 'Delhi' ORDER BY experience DESC;"
+        "sql": "SELECT name, skills, location, slug FROM candidates_profile WHERE role LIKE '%UI/UX%' AND skills LIKE '%Figma%' AND location = 'Delhi' ORDER BY experience DESC;"
     }
 ]
 
@@ -67,10 +67,12 @@ The available columns in candidate_profiles are:
 - has_workvisa: Boolean indicating candidate does have workvisa or not
 - expected_salary_range: Salary expectations
 - is_available: Boolean indicating if candidate is actively looking
+- slug: Unique identifier for each candidate (IMPORTANT: always include this field in your SELECT statements)
 
 Query best practices:
 - Use LIKE with '%keyword%' for flexible text searching in resume_data
 - Include only candidates where is_available = True
+- Always include the slug field in your SELECT statements
 - Never use SELECT * - only select the specific columns needed
 - DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.)
 - Return results ordered by most relevant first (e.g., most experience for senior roles)
@@ -112,6 +114,7 @@ def query_candidates(query: str):
 ### Database Search Results
 {result_part}
 
+IMPORTANT: When referring to candidates, include the slug for each candidate by using the format [[resume:/api/candidates/SLUG/]] where SLUG is the candidate's unique identifier.
 Use the above candidate information to answer the recruiter's query: "{query}"
                 """
                 formatted_outputs.append(formatted_result)
@@ -121,27 +124,3 @@ Use the above candidate information to answer the recruiter's query: "{query}"
     else:
         return ["No relevant candidates found in the database matching the query criteria."]
 
-
-"""
-def chat_with_assistant(query: str):    
-    # First, check if this is a candidate search query
-    candidate_results = query_candidates(query)
-
-    # If we got candidate results, format them as context
-    if candidate_results:
-        context = "\n".join(candidate_results)
-    else:
-        context = "No relevant candidates found."
-
-    # Generate a natural language response with AI
-    response = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[
-            {"role": "system", "content": "You are a helpful recruitment assistant. Use structured candidate search data when available."},
-            {"role": "user", "content": f"Query: {query}\n\nCandidate Search Results:\n{context}"}
-        ],
-        temperature=0.1
-    )
-
-    return response.choices[0].message.content
-"""
