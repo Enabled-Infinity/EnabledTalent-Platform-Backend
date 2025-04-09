@@ -45,7 +45,8 @@ class OrganizationsViewSet(viewsets.ModelViewSet):
             instance._prefetched_objects_cache = {}
 
         return Response(self.get_serializer(new_instance).data)
-
+    '''
+    
     @action(methods=("POST",), detail=True, url_path="create-invite")
     def create_organization_invite(self, request, pk):
 
@@ -85,3 +86,4 @@ class OrganizationsViewSet(viewsets.ModelViewSet):
         )
         
         return Response(serializer.data,status=status.HTTP_201_CREATED)
+    '''
