@@ -16,7 +16,15 @@ client= OpenAI()
 NEEDS= (
     ("YES", "YES"),
     ("NO", "NO"),
-    ("PREFER TO DISCUSS LATER", "PREFER TO DISCUSS LATER")
+    ("PREFER_TO_DISCUSS_LATER", "PREFER_TO_DISCUSS_LATER")
+)
+
+DISCLOSURE_PREFERENCE= (
+    ("DURING_APPLICATION", "DURING_APPLICATION"),
+    ("DURING_INTERVIEW", "DURING_INTERVIEW"),
+    ("AFTER_JOB_OFFER", "AFTER_JOB_OFFER"),
+    ("AFTER_STARTING_WORK", "AFTER_STARTING_WORK"),
+    ("NOT_APPLICABLE", "NOT_APPLICABLE")
 )
 class CandidateProfile(models.Model):
     user= models.OneToOneField(User, on_delete=models.CASCADE)
@@ -31,6 +39,7 @@ class CandidateProfile(models.Model):
     has_workvisa= models.BooleanField(default=False)  # No null=True needed
     disability_categories= models.JSONField(default=list, help_text='Array for Disability criterias"s ')
     accommodation_needs= models.CharField(max_length=100, choices=NEEDS)
+    disclosure_preference= models.CharField(max_length=100, choices= DISCLOSURE_PREFERENCE)
     workplace_accommodations= models.JSONField(default=list, help_text="Accommodations for WorkPlace")
 
     expected_salary_range = models.CharField(max_length=20, blank=True, null=True)
