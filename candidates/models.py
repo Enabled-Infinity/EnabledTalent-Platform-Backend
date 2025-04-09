@@ -13,6 +13,11 @@ client= OpenAI()
 
 # Create your models here.
 
+NEEDS= (
+    ("YES", "YES"),
+    ("NO", "NO"),
+    ("PREFER TO DISCUSS LATER", "PREFER TO DISCUSS LATER")
+)
 class CandidateProfile(models.Model):
     user= models.OneToOneField(User, on_delete=models.CASCADE)
     organization= models.ForeignKey(Organization, on_delete= models.CASCADE, blank=True, null=True)
@@ -24,6 +29,9 @@ class CandidateProfile(models.Model):
     employment_type_preferences= models.JSONField(default=list, help_text="Array of employment types like ['Full-time', 'Part-time', 'Contract']")
     work_mode_preferences= models.JSONField(default=list, help_text="Array of work modes like ['Remote', 'On-site', 'Hybrid']")
     has_workvisa= models.BooleanField(default=False)  # No null=True needed
+    disability_categories= models.JSONField(default=list, help_text='Array for Disability criterias"s ')
+    accommodation_needs= models.CharField(max_length=100, choices=NEEDS)
+    workplace_accommodations= models.JSONField(default=list, help_text="Accommodations for WorkPlace")
 
     expected_salary_range = models.CharField(max_length=20, blank=True, null=True)
     video_pitch_url = models.FileField(upload_to='Candidates-VideoPitches', validators=[FileExtensionValidator(allowed_extensions=['mp4','mov','wmv','avi','avchd','flv','f4v','swf','mkv'])],

@@ -9,7 +9,8 @@ class CreateCandidateProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model= models.CandidateProfile
         fields= ['resume_file', 'willing_to_relocate', 'employment_type_preferences', 'work_mode_preferences',
-                 'has_workvisa', 'expected_salary_range', 'video_pitch_url', 'is_available']
+                 'has_workvisa', 'expected_salary_range', 'video_pitch_url', 'is_available', 'disability_categories',
+                 'accommodation_needs', 'workplace_accommodations']
         
     def create(self, validated_data):
         inst = super().create(validated_data)
@@ -37,7 +38,8 @@ class CandidateProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model= models.CandidateProfile
         fields= ['user', 'organization','id', 'slug', 'resume_file', 'resume_data', 'willing_to_relocate', 'employment_type_preferences',
-                'work_mode_preferences', 'has_workvisa', 'expected_salary_range', 'video_pitch_url', 'is_available', 'get_all_notes']
+                'work_mode_preferences', 'has_workvisa', 'expected_salary_range', 'video_pitch_url', 'is_available', 'get_all_notes',
+                'disability_categories', 'accommodation_needs', 'workplace_accommodations']
         
 
         
