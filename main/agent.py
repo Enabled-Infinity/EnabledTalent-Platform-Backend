@@ -14,23 +14,31 @@ client= OpenAI()
 examples = [
     {
         "query": "Find backend developers with 3+ years of experience and experience in Python",
-        "sql": "SELECT name, skills, experience, slug FROM candidates_profile WHERE skills LIKE '%backend%' AND skills LIKE '%Python%' AND experience >= 3 ORDER BY experience DESC;"
+        "sql": "SELECT resume_data, skills, experience, slug FROM candidates_profile WHERE resume_data->>'$.skills' LIKE '%backend%' AND resume_data->>'$.skills' LIKE '%Python%' AND resume_data->>'$.experience' >= 3 ORDER BY resume_data->>'$.experience' DESC LIMIT 10;"
     },
     {
         "query": "Show me marketing specialists with at least 5 years of experience",
-        "sql": "SELECT name, skills, experience, slug FROM candidates_profile WHERE role LIKE '%marketing%' AND experience >= 5 ORDER BY experience DESC;"
+        "sql": "SELECT resume_data, slug FROM candidates_profile WHERE resume_data->>'$.role' LIKE '%marketing%' AND resume_data->>'$.experience' >= 5 ORDER BY resume_data->>'$.experience' DESC LIMIT 10;"
     },
     {
-        "query": "Find candidates proficient in React and frontend development with 2+ years of experience",
-        "sql": "SELECT name, skills, experience, slug FROM candidates_profile WHERE skills LIKE '%React%' AND skills LIKE '%frontend%' AND experience >= 2 ORDER BY experience DESC;"
+        "query": "Find candidates proficient in React and frontend development with 2+ years of experience who are willing to relocate",
+        "sql": "SELECT resume_data, willing_to_relocate, slug FROM candidates_profile WHERE resume_data->>'$.skills' LIKE '%React%' AND resume_data->>'$.skills' LIKE '%frontend%' AND resume_data->>'$.experience' >= 2 AND willing_to_relocate = true ORDER BY resume_data->>'$.experience' DESC LIMIT 10;"
     },
     {
-        "query": "Get Python developers located in Bangalore with 4+ years of experience",
-        "sql": "SELECT name, location, skills, experience, slug FROM candidates_profile WHERE skills LIKE '%Python%' AND location = 'Bangalore' AND experience >= 4 ORDER BY experience DESC;"
+        "query": "Get Python developers located in Bangalore with 4+ years of experience who prefer remote work",
+        "sql": "SELECT resume_data, work_mode_preferences, slug FROM candidates_profile WHERE resume_data->>'$.skills' LIKE '%Python%' AND resume_data->>'$.location' = 'Bangalore' AND resume_data->>'$.experience' >= 4 AND work_mode_preferences @> '[\"Remote\"]' ORDER BY resume_data->>'$.experience' DESC LIMIT 10;"
     },
     {
-        "query": "Find UI/UX designers in Delhi with experience in Figma",
-        "sql": "SELECT name, skills, location, slug FROM candidates_profile WHERE role LIKE '%UI/UX%' AND skills LIKE '%Figma%' AND location = 'Delhi' ORDER BY experience DESC;"
+        "query": "Find UI/UX designers who need accommodation for their disability",
+        "sql": "SELECT resume_data, disability_categories, accommodation_needs, slug FROM candidates_profile WHERE resume_data->>'$.role' LIKE '%UI/UX%' AND accommodation_needs = 'YES' ORDER BY resume_data->>'$.experience' DESC LIMIT 10;"
+    },
+    {
+        "query": "Get candidates with a work visa who are looking for full-time employment",
+        "sql": "SELECT resume_data, has_workvisa, employment_type_preferences, slug FROM candidates_profile WHERE has_workvisa = true AND employment_type_preferences @> '[\"Full-time\"]' ORDER BY resume_data->>'$.experience' DESC LIMIT 10;"
+    },
+    {
+        "query": "Find candidates with an expected salary range between 80K and 100K who have submitted a video pitch",
+        "sql": "SELECT resume_data, expected_salary_range, video_pitch_url, slug FROM candidates_profile WHERE expected_salary_range BETWEEN '80000' AND '100000' AND video_pitch_url IS NOT NULL ORDER BY resume_data->>'$.experience' DESC LIMIT 10;"
     }
 ]
 
@@ -62,10 +70,15 @@ You must query the candidate_profiles table to find candidates matching the sear
 The available columns in candidate_profiles are: 
 - resume_data: Contains whole information about the candidate in structured resume information
 - willing_to_relocate: Boolean indicating relocation willingness
-- employment_type_preference: JSON field with preferences like full-time, contract, etc.
-- work_mode_preference: JSON field with preferences like remote, hybrid, onsite
+- employment_type_preferences: JSON field with preferences like full-time, contract, etc.
+- work_mode_preferences: JSON field with preferences like remote, hybrid, onsite
 - has_workvisa: Boolean indicating candidate does have workvisa or not
+- disability_categories: JSON field with disability categories the candidate identifies with
+- accommodation_needs: String with choices from YES, NO, or PREFER_TO_DISCUSS_LATER
+- disclosure_preference: String with candidate's preferred timing for disclosure
+- workplace_accommodations: JSON field with workplace accommodations needed by the candidate
 - expected_salary_range: Salary expectations
+- video_pitch_url: URL to candidate's video pitch if available
 - is_available: Boolean indicating if candidate is actively looking
 - slug: Unique identifier for each candidate (IMPORTANT: always include this field in your SELECT statements)
 
