@@ -112,3 +112,39 @@ def get_resume_context(resume_slug: str, user_query: str, thread_id=None, messag
         "thread_id": thread_id,
         "messages": messages
     }
+
+def get_career_coach(resume_slug: str, user_query: str, thread_id=None, messages=None):
+    resume = get_object_or_404(CandidateProfile, slug=resume_slug)
+    notes = "\n".join(note.note for note in resume.notes_set.all())
+    
+    # Build messages array with conversation history if available
+    if not messages:
+        messages = [
+            {"role": "system", "content": f"""You are an AI career coach helping candidates with their job search and career development.
+             You have access to the candidate's resume and can provide personalized advice based on their background.
+             Resume Details: {resume.resume_data}
+             Additional Notes: {notes if notes else "No notes added yet."}
+             
+             Provide specific, actionable career advice tailored to the candidate's skills, experience, and goals.
+             Focus on job search strategies, resume improvements, interview preparation, skill development, 
+             and career progression paths based on their current profile."""}
+        ]
+    
+    # Add the new user query
+    messages.append({"role": "user", "content": user_query})
+    
+    # Get response from LLM
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=messages
+    )
+    
+    # Add the assistant's response to the conversation history
+    assistant_message = response.choices[0].message
+    messages.append({"role": "assistant", "content": assistant_message.content})
+
+    return {
+        "response": assistant_message.content,
+        "thread_id": thread_id,
+        "messages": messages
+    }

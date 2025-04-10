@@ -60,10 +60,12 @@ class CandidateViewSet(viewsets.ModelViewSet):
         serializer.save(resume=get_resume)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
-from .serializers import PromptSerializer, PromptResponseSerializer
-from .models import conversation_threads,get_resume_context
+from .serializers import PromptSerializer, PromptResponseSerializer, CareerCoachSerializer, CareerCoachResponseSerializer
+from .models import conversation_threads,get_resume_context, get_career_coach
 import uuid
 
+# Create a dictionary to store career coach conversation threads
+career_coach_threads = {}
 class PromptAPI(APIView):
     permission_classes = (permissions.AllowAny,)
     
@@ -132,3 +134,41 @@ class NoteViewSet(viewsets.ModelViewSet):
         
         self.perform_destroy(instance)
         return Response({"detail": "Note deleted"}, status=status.HTTP_204_NO_CONTENT)
+
+class CareerCoachAPI(APIView):
+    permission_classes = (permissions.AllowAny,)
+    
+    def post(self, request):
+        serializer = CareerCoachSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        
+        data = serializer.validated_data
+        thread_id = data.get('thread_id')
+        
+        # Get or create thread
+        if thread_id and thread_id in career_coach_threads:
+            messages = career_coach_threads[thread_id]
+        else:
+            # Generate a new thread ID
+            thread_id = str(uuid.uuid4())
+            messages = None
+        
+        # Get response from LLM using career coach function
+        result = get_career_coach(
+            resume_slug=data['resume_slug'],
+            user_query=data['input_text'],
+            thread_id=thread_id,
+            messages=messages
+        )
+        
+        # Store updated conversation in memory
+        career_coach_threads[thread_id] = result['messages']
+        
+        # Return the response
+        response_serializer = CareerCoachResponseSerializer({
+            'output': result['response'],
+            'thread_id': thread_id
+        })
+        return Response(response_serializer.data)

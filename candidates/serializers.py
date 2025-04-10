@@ -57,3 +57,12 @@ class PromptSerializer(serializers.Serializer):
 class PromptResponseSerializer(serializers.Serializer):
     output = serializers.CharField()
     thread_id = serializers.CharField()
+
+class CareerCoachSerializer(serializers.Serializer):
+    input_text = serializers.CharField()
+    resume_slug = serializers.CharField()
+    thread_id = serializers.CharField(required=False, allow_null=True)
+
+class CareerCoachResponseSerializer(serializers.Serializer):
+    output = serializers.CharField()
+    thread_id = serializers.CharField()
