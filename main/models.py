@@ -352,6 +352,7 @@ class JobPost(models.Model):
     skills= models.ManyToManyField(Skills)
     estimated_salary= models.CharField(max_length=100)
     created_at= models.DateTimeField(auto_now_add=True)
+    visa_required= models.BooleanField(default=False)
 
     def _str_(self):
         return self.title
