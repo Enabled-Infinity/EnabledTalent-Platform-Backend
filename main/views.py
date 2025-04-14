@@ -9,6 +9,9 @@ from datetime import datetime
 from dotenv import load_dotenv
 from openai import OpenAI
 from .models import generate_insights_with_gpt4
+from rest_framework.views import APIView
+from .jobpost_candidate_ranker import ranking_algo
+
 load_dotenv()
 client= OpenAI()
 
@@ -307,3 +310,35 @@ class JobPostViewSet(viewsets.ModelViewSet):
         instance= self.get_object()
         self.perform_destroy(instance)
         return Response(status= status.HTTP_200_OK)
+
+    @action(methods=["POST"], detail=True, url_path="rank-candidates")
+    def rank_candidates(self, request, pk=None):
+        """
+        Triggers the candidate ranking algorithm for a job post
+        """
+        job = self.get_object()
+        
+        try:
+            # Run the ranking algorithm
+            result = ranking_algo(job.id)
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"detail": f"Error ranking candidates: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(methods=["GET"], detail=True, url_path="ranking-data")
+    def get_ranking_data(self, request, pk=None):
+        """
+        Returns the saved candidate ranking data for a job post
+        """
+        job = self.get_object()
+        
+        if not job.candidate_ranking_data:
+            return Response(
+                {"detail": "No ranking data available for this job post."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        return Response(job.candidate_ranking_data, status=status.HTTP_200_OK)

@@ -6,7 +6,8 @@ from django.shortcuts import get_object_or_404
 import psycopg2
 import tiktoken
 import json
-
+import datetime
+from pydantic import BaseModel
 load_dotenv()
 client = OpenAI()
 
@@ -59,6 +60,11 @@ def ranking_algo_unstructured(job_id: int):
     return 'done'
 """
 
+class SkillOutput(BaseModel):
+    skills: list[str]
+
+
+
 
 from .models import WORKPLACE_TYPES,WORK_TYPES
 def ranking_algo(job_id: int):
@@ -88,6 +94,12 @@ Skills Required:
 {job_skills}
 """
 
+    skills_synonames= client.beta.chat.completions.parse(model="gpt-4o", messages=[{'role': 'system', "content": "You're an Keyword/Synoname generating assistant which generates similar keywords for any given particular skill, Example: Sample Input=Python Backend Developer, Sample Output= Python, Django, Flask, ORM, databases, FastAPI, etc, etc"},
+                                                                               {'role': 'user', 'content': f"Generate keywords to search resume in the database for the given Skills {job_skills}"},
+                                            ],
+                                            response_format=SkillOutput)
+    expanded_skills= (skills_synonames.choices[0].message.content)
+    print(expanded_skills)
     # Fetch candidates
     candidates = CandidateProfile.objects.filter(is_available=True, resume_data__isnull=False)
     if job_query.visa_required:
@@ -125,8 +137,17 @@ This candidate is currently available and actively looking for opportunities.
     # Rank candidates based on matching with job description
     ranked_candidates, total_tokens, total_cost = rank_candidates_by_match(job_description, candidate_data)
     
+    result_data= {
+        "ranked_candidates": ranked_candidates,
+        "token_usage": total_tokens,
+        "estimated_cost": total_cost,
+        "last_updated": str(datetime.datetime.now())
+    }
+    job_query.candidate_ranking_data = result_data
+    job_query.save()
+
     return {
-        #"job": job_description.strip(),
+        "job": job_description.strip(),
         "ranked_candidates": ranked_candidates,
         "token_usage": total_tokens,
         "estimated_cost": total_cost

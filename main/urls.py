@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .integrations.zoho.script import *
 
@@ -70,7 +70,7 @@ urlpatterns = [
     path('zoho/auth/', zoho_auth_init, name='zoho_auth_init'),
     path('zoho/auth/callback/', zoho_auth_callback, name='zoho_auth_callback'),
     path("zoho/revoke", revoke_zoho_token, name="revoke_zoho_token"),
-    path('zoho/candidates', fetch_zoho_recruit_candidates, name='fetch_zoho_recruit_candidates')
+    path('zoho/candidates', fetch_zoho_recruit_candidates, name='fetch_zoho_recruit_candidates'),
 ]
 urlpatterns += router.urls
 websocket_urlpatterns = [path("api/ws/", ChatConsumer.as_asgi())]

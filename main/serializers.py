@@ -178,4 +178,4 @@ class JobPostSerializer(serializers.ModelSerializer):
     class Meta:
         model= models.JobPost
         fields= ['user','organization', 'title', 'job_desc', 'workplace_type',
-                 'location', 'job_type', 'skills', 'id', 'estimated_salary', 'visa_required']
+                 'location', 'job_type', 'skills', 'id', 'estimated_salary', 'visa_required', 'candidate_ranking_data']

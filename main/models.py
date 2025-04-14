@@ -353,6 +353,7 @@ class JobPost(models.Model):
     estimated_salary= models.CharField(max_length=100)
     created_at= models.DateTimeField(auto_now_add=True)
     visa_required= models.BooleanField(default=False)
+    candidate_ranking_data = models.JSONField(null=True, blank=True, help_text="Stores candidate ranking results")
 
-    def _str_(self):
+    def __str__(self):
         return self.title
