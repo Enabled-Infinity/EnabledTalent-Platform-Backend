@@ -17,7 +17,10 @@ class CandidateViewSet(viewsets.ModelViewSet):
 
 
     def get_queryset(self):
-        return models.CandidateProfile.objects.filter(user=self.request.user)
+        if self.request.user.is_authenticated:
+            return models.CandidateProfile.objects.filter(user=self.request.user)
+        else:
+            return models.CandidateProfile.objects.none()
 
 
     def retrieve(self, request, *args, **kwargs):
