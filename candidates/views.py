@@ -6,23 +6,15 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from . import models,serializers
 from rest_framework.parsers import FormParser, MultiPartParser,JSONParser
-from datetime import datetime
-from django.shortcuts import get_object_or_404
-from rest_framework import pagination
-from channels.layers import get_channel_layer
 
 class CandidateViewSet(viewsets.ModelViewSet):
-    permission_classes= (permissions.IsAuthenticated,)
+    permission_classes= (permissions.AllowAny,)
     serializer_class= serializers.CandidateProfileSerializer
     queryset= models.CandidateProfile.objects.all()
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     lookup_field = 'slug'  # Use slug instead of id for lookups
 
-    def get_queryset(self):
-        print(self.request.user)
-        return models.CandidateProfile.objects.filter(user= self.request.user)
 
-    
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         print(instance)
