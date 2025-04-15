@@ -22,6 +22,15 @@ class CandidateViewSet(viewsets.ModelViewSet):
         print(self.request.user)
         return models.CandidateProfile.objects.filter(user= self.request.user)
 
+    
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        print(instance)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+
+
     def create(self, request, *args, **kwargs):
         serializer=  serializers.CreateCandidateProfileSerializer(
             data= request.data
