@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from . import models,serializers
 from rest_framework.parsers import FormParser, MultiPartParser,JSONParser
+from django.shortcuts import get_object_or_404
 
 class CandidateViewSet(viewsets.ModelViewSet):
     permission_classes= (permissions.AllowAny,)
@@ -15,9 +16,13 @@ class CandidateViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'  # Use slug instead of id for lookups
 
 
+    def get_queryset(self):
+        return models.CandidateProfile.objects.filter(user=self.request.user)
+
+
     def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        print(instance)
+        slug = kwargs.get('slug')
+        instance = get_object_or_404(models.CandidateProfile, slug=slug)
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
         
