@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from . import models,serializers
 from rest_framework.parsers import FormParser, MultiPartParser,JSONParser
 from django.shortcuts import get_object_or_404
+from django.core.files.storage import default_storage
+from .resume_parser import parse_resume
 
 class CandidateViewSet(viewsets.ModelViewSet):
     permission_classes= (permissions.AllowAny,)
@@ -69,6 +71,61 @@ class CandidateViewSet(viewsets.ModelViewSet):
         serializer.save(resume=get_resume)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     
+    @action(methods=["POST"], detail=True, url_path="parse-resume")
+    def parse_resume_data(self, request, slug):
+        instance = self.get_object()
+        # Check if resume file exists
+        if not instance.resume_file:
+            return Response(
+                {"error": "No resume file found for this record."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+         
+        try:
+            # Update parsing status to 'in progress'
+            instance.parsing_status = 'parsing'
+            instance.save(update_fields=['parsing_status'])
+             
+             # Get the file path or URL depending on storage backend
+            try:
+                # For local storage
+                resume_url = default_storage.path(instance.resume_file.name)
+            except NotImplementedError:
+                # For S3 or other remote storage
+                print('eewwd')
+                resume_url = default_storage.url(instance.resume_file.name)
+             
+             # Parse the resume
+            parsed_data = parse_resume(resume_url)
+             
+             # Convert Pydantic model to dictionary
+            resume_data_dict = parsed_data.dict() if hasattr(parsed_data, 'dict') else parsed_data.model_dump()
+             
+             # Update the resume record with the parsed data
+            instance.resume_data = resume_data_dict
+            instance.parsing_status = 'parsed'
+            instance.save()
+             
+            # Return the updated instance
+            serializer = self.get_serializer(instance)
+            return Response(
+                {
+                    "message": "Resume parsed successfully",
+                    "data": serializer.data
+                }, 
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            # Update parsing status to 'failed'
+            instance.parsing_status = 'failed'
+            instance.save(update_fields=['parsing_status'])
+
+            return Response(
+                {"error": f"Error parsing resume: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+
 from .serializers import PromptSerializer, PromptResponseSerializer, CareerCoachSerializer, CareerCoachResponseSerializer
 from .models import conversation_threads,get_resume_context, get_career_coach
 import uuid

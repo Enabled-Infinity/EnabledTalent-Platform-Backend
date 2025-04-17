@@ -1,7 +1,5 @@
 from rest_framework import serializers
 from . import models
-from django.core.files.storage import FileSystemStorage
-from .tasks import process_resume
 from users.serializers import UserSerializer
 from organization.serializers import OrganizationSerializer
 
@@ -12,18 +10,6 @@ class CreateCandidateProfileSerializer(serializers.ModelSerializer):
                  'has_workvisa', 'expected_salary_range', 'video_pitch_url', 'is_available', 'disability_categories',
                  'accommodation_needs', 'workplace_accommodations']
         
-    def create(self, validated_data):
-        inst = super().create(validated_data)
-        
-        if resume_file := validated_data.get("resume_file"):
-            fs = FileSystemStorage()
-            filename = fs.save(resume_file.name, resume_file)
-            file_path = fs.path(filename)
-            print("filepath------", file_path)
-            process_resume.delay(inst.slug, file_path)
-            #process_resume(inst.slug, file_path)
-
-        return inst
     
 
 class NoteSerializer(serializers.ModelSerializer):

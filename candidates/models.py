@@ -27,12 +27,19 @@ DISCLOSURE_PREFERENCE= (
     ("NOT_APPLICABLE", "NOT_APPLICABLE")
 )
 class CandidateProfile(models.Model):
+    PARSING_STATUS = (
+        ('not_parsed', 'Not Parsed'),
+        ('parsing', 'Parsing in Progress'),
+        ('parsed', 'Parsed Successfully'),
+        ('failed', 'Parsing Failed'),
+    )
     user= models.OneToOneField(User, on_delete=models.CASCADE)
     organization= models.ForeignKey(Organization, on_delete= models.CASCADE, blank=True, null=True)
     resume_file= models.FileField(upload_to='Candidates-Resume', validators=[FileExtensionValidator(allowed_extensions=['pdf'])])
     resume_data= models.JSONField(blank=True, null=True) 
     willing_to_relocate= models.BooleanField(default=True)
     slug= models.SlugField(max_length=255, unique=True, blank=True)
+    parsing_status = models.CharField(max_length=20, choices=PARSING_STATUS, default='not_parsed')
 
     employment_type_preferences= models.JSONField(default=list, help_text="Array of employment types like ['Full-time', 'Part-time', 'Contract']")
     work_mode_preferences= models.JSONField(default=list, help_text="Array of work modes like ['Remote', 'On-site', 'Hybrid']")
