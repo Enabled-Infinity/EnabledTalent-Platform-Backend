@@ -137,14 +137,7 @@ def query_candidates(query: str):
         Database Results:
         {formatted_outputs}
         
-        Based on these results, provide a clear and structured response for the recruiter. 
-        For each candidate, include:
-        1. Their key skills and experience
-        2. Match percentage to the query requirements
-        3. Any relevant special factors (visa status, relocation preferences, etc.)
-        4. Link to their profile using the format [[resume:/api/candidates/SLUG/]] where SLUG is the candidate's unique identifier.
-        
-        Format the response in a way that's easy to read and understand.
+        Provide a concise and structured summary for the recruiter. Highlight key skills, experience, and any special factors (e.g., visa status, relocation preferences). Include links to candidate profiles using the format [[resume:/api/candidates/SLUG/]].
         """
         
         # Get LLM processed summary

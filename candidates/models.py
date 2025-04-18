@@ -96,9 +96,16 @@ def get_resume_context(resume_slug: str, user_query: str, thread_id=None, messag
     # Build messages array with conversation history if available
     if not messages:
         messages = [
-            {"role": "system", "content": f"""You are an AI assistant helping users understand a resume.
-             Resume Details: {resume.resume_data}
-             Additional Notes: {notes if notes else "No notes added yet."}"""}
+            {"role": "system", "content": f"""
+            You are an AI assistant helping users understand a resume.
+            Focus on providing concise and relevant insights based on the user's query.
+            
+            Resume Details: {resume.resume_data}
+            Additional Notes: {notes if notes else "No notes added yet."}
+            
+            Please summarize the key skills, experiences, and any unique attributes of the candidate that relate to the user's query.
+            Keep the response brief and to the point, highlighting only the most important information.
+            """}
         ]
     
     # Add the new user query
@@ -127,14 +134,16 @@ def get_career_coach(resume_slug: str, user_query: str, thread_id=None, messages
     # Build messages array with conversation history if available
     if not messages:
         messages = [
-            {"role": "system", "content": f"""You are an AI career coach helping candidates with their job search and career development.
-             You have access to the candidate's resume and can provide personalized advice based on their background.
-             Resume Details: {resume.resume_data}
-             Additional Notes: {notes if notes else "No notes added yet."}
-             
-             Provide specific, actionable career advice tailored to the candidate's skills, experience, and goals.
-             Focus on job search strategies, resume improvements, interview preparation, skill development, 
-             and career progression paths based on their current profile."""}
+            {"role": "system", "content": f"""
+            You are an AI career coach helping candidates with their job search and career development.
+            Provide specific, actionable career advice based on the candidate's resume and goals.
+            
+            Resume Details: {resume.resume_data}
+            Additional Notes: {notes if notes else "No notes added yet."}
+            
+            Focus on key skills, experiences, and career progression paths. Offer practical tips for job search strategies, resume improvements, and interview preparation.
+            Keep the advice concise and relevant to the candidate's current profile and goals.
+            """}
         ]
     
     # Add the new user query
