@@ -10,7 +10,8 @@ from .views import (
     PromptViewSet,
     BlockNoteViewSet,
     ChannelViewSet,
-    JobPostViewSet
+    JobPostViewSet,
+    AgentAPI
 )
 
 router = DefaultRouter()
@@ -64,9 +65,7 @@ urlpatterns = [
         PromptViewSet.as_view({"delete": "destroy"}),
         name="delete-prompt",
     ),
-
-
-
+    path('agent/', AgentAPI.as_view(), name='agent-search'),
     path('zoho/auth/', zoho_auth_init, name='zoho_auth_init'),
     path('zoho/auth/callback/', zoho_auth_callback, name='zoho_auth_callback'),
     path("zoho/revoke", revoke_zoho_token, name="revoke_zoho_token"),

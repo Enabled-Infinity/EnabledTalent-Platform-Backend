@@ -11,6 +11,8 @@ from openai import OpenAI
 from .models import generate_insights_with_gpt4
 from rest_framework.views import APIView
 from .jobpost_candidate_ranker import ranking_algo
+from .serializers import AgentQuerySerializer, AgentResponseSerializer
+from main.agent import query_candidates
 
 load_dotenv()
 client= OpenAI()
@@ -342,3 +344,25 @@ class JobPostViewSet(viewsets.ModelViewSet):
             )
         
         return Response(job.candidate_ranking_data, status=status.HTTP_200_OK)
+
+class AgentAPI(APIView):
+    permission_classes = (permissions.AllowAny,)
+    
+    def post(self, request):
+        serializer = AgentQuerySerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
+        
+        # Get the query from validated data
+        query = serializer.validated_data['query']
+        
+        # Use the agent to search for candidates
+        results = query_candidates(query)
+        
+        # Return the response
+        response_serializer = AgentResponseSerializer({
+            'results': results
+        })
+        
+        return Response(response_serializer.data)

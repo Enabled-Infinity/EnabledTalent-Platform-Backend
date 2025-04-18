@@ -179,3 +179,9 @@ class JobPostSerializer(serializers.ModelSerializer):
         model= models.JobPost
         fields= ['user','organization', 'title', 'job_desc', 'workplace_type',
                  'location', 'job_type', 'skills', 'id', 'estimated_salary', 'visa_required', 'candidate_ranking_data']
+
+class AgentQuerySerializer(serializers.Serializer):
+    query = serializers.CharField(help_text="The recruiter's query to search for candidates")
+
+class AgentResponseSerializer(serializers.Serializer):
+    results = serializers.JSONField(help_text="The results of the agent's query")

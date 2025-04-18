@@ -115,7 +115,7 @@ def query_candidates(query: str):
     # Extract and process results
     outputs = [str(result.content) for result in results['messages'] if isinstance(result, ToolMessage)]
     
-    # Format the results in a more structured way for better RAG context
+    # Format the results in a more structured way
     if outputs:
         formatted_outputs = []
         for output in outputs:
@@ -123,17 +123,42 @@ def query_candidates(query: str):
             if "Result:" in output:
                 # Extract just the results part
                 result_part = output.split("Result:")[1].strip()
-                formatted_result = f"""
-### Database Search Results
-{result_part}
-
-IMPORTANT: When referring to candidates, include the slug for each candidate by using the format [[resume:/api/candidates/SLUG/]] where SLUG is the candidate's unique identifier.
-Use the above candidate information to answer the recruiter's query: "{query}"
-                """
+                formatted_result = result_part
                 formatted_outputs.append(formatted_result)
             else:
                 formatted_outputs.append(output)
-        return formatted_outputs
+        
+        # Process the results with an LLM for better presentation
+        summary_prompt = f"""
+        You are a recruitment assistant analyzing database query results.
+        
+        Original Recruiter Query: {query}
+        
+        Database Results:
+        {formatted_outputs}
+        
+        Based on these results, provide a clear and structured response for the recruiter. 
+        For each candidate, include:
+        1. Their key skills and experience
+        2. Match percentage to the query requirements
+        3. Any relevant special factors (visa status, relocation preferences, etc.)
+        4. Link to their profile using the format [[resume:/api/candidates/SLUG/]] where SLUG is the candidate's unique identifier.
+        
+        Format the response in a way that's easy to read and understand.
+        """
+        
+        # Get LLM processed summary
+        summary_response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "system", "content": summary_prompt}]
+        )
+        
+        processed_results = {
+            "raw_results": formatted_outputs,
+            "processed_summary": summary_response.choices[0].message.content
+        }
+        
+        return processed_results
     else:
-        return ["No relevant candidates found in the database matching the query criteria."]
+        return {"raw_results": [], "processed_summary": "No relevant candidates found in the database matching the query criteria."}
 
