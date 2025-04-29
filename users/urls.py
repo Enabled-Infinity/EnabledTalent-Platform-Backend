@@ -14,5 +14,7 @@ urlpatterns = [
     path("change-password/",views.ChangePasswordView.as_view()
          ,name='change-password'),
     path("add-feedback/",views.AddFeedback.as_view(),
-         name='add-feedback')
+         name='add-feedback'),
+    path("verify-email/", views.VerifyEmailView.as_view(), name="verify-email"),
+    path("resend-verification/", views.ResendVerificationEmailView.as_view(), name="resend-verification"),
 ] + router.urls

@@ -4,6 +4,7 @@ from django.core.validators import validate_image_file_extension
 from .managers import CustomUserManager
 from django.utils import timezone
 import random 
+from datetime import timedelta
 
 
 
@@ -13,6 +14,7 @@ class User(AbstractUser):
     newsletter= models.BooleanField(default=True, help_text="Do you want to receive the newsletter?")
     ws_channel_name= models.CharField(max_length=300, blank=True, null=True)
     last_online= models.DateTimeField(default=timezone.now)
+    is_verified= models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -84,3 +86,23 @@ class Feedback(models.Model):
 
     def __str__(self):
         return self.user.email
+    
+    
+class EmailVerificationToken(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    code = models.CharField(max_length=6, editable=False, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.code:
+            self.code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            while EmailVerificationToken.objects.filter(code=self.code).exists():
+                self.code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.code}"
+    
+    @property
+    def is_expired(self):
+        return timezone.now() > self.created_at + timedelta(hours=24)

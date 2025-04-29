@@ -119,6 +119,9 @@ if os.getenv("DB_NAME") and not DEBUG:  # use postgres if env variables are conf
             "PASSWORD": os.environ["DB_PASSWORD"],
             "HOST": os.environ["DB_HOST"],
             "PORT": os.environ["DB_PORT"],  # 5432 by default
+            "OPTIONS": {
+            "sslmode": "require",
+        },
         }
     }
 
