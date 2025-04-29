@@ -9,7 +9,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 SECRET_KEY = os.environ['SECRET_KEY']
-
 DEBUG = True
 
 ALLOWED_HOSTS = ['*', '3.99.190.148', 'hiremod.vercel.app']
@@ -44,6 +43,21 @@ SESSION_COOKIE_AGE = 3600
 SESSION_COOKIE_SAMESITE = 'None'
 SESSION_COOKIE_SECURE = True
 
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+AWS_LOCATION = 'media'  # Folder in your bucket for media files
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/'
+
+STORAGES = {
+    "default": {
+        "BACKEND": "backends.storage.MediaStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
@@ -172,8 +186,6 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-MEDIA_ROOT= os.path.join(BASE_DIR,'media')
-MEDIA_URL='/media/'
 
 REST_FRAMEWORK = {
         'DEFAULT_PERMISSION_CLASSES': [
