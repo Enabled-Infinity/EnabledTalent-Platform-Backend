@@ -5,10 +5,11 @@ from django.contrib.auth import logout,login,authenticate,update_session_auth_ha
 from users.models import User, EmailVerificationToken
 from rest_framework.decorators import action
 from django.conf import settings
-from django.core.mail import send_mail
+# from django.core.mail import send_mail
 # Create your views here.
 from . import serializers,permissions as  pp
 from organization.models import OrganizationInvite
+import smtplib
 
 
 class SignupView(APIView):
@@ -32,6 +33,7 @@ class SignupView(APIView):
         verification_token = EmailVerificationToken.objects.create(user=user)
         
         # Send verification email with code
+        subjet = "Verify your email address"
         verification_message = f"""
 Hello,
 
@@ -44,15 +46,22 @@ If you didn't create an account, you can safely ignore this email.
 Best regards,
 The HireMod Team
 """
+        msg = f"Subject: {subjet}\n\n{verification_message}"
         try:
             print('dedddd')
-            send_mail(
-                subject="Verify your email address",
-                message=verification_message,
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[user.email],
-                fail_silently=False,
-            )
+            smtp =smtplib.SMTP('smtp.elasticemail.com', port='2525')
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+            smtp.sendmail(settings.EMAIL_FROM, user.email, msg)
+            smtp.quit()
+            # send_mail(
+            #     subject="Verify your email address",
+            #     message=verification_message,
+            #     from_email=settings.EMAIL_HOST_USER,
+            #     recipient_list=[user.email],
+            #     fail_silently=False,
+            # )
             print('dede')
         except Exception as e:
             print(f"Failed to send verification email: {str(e)}")
@@ -162,6 +171,7 @@ class LoginView(APIView):
                 verification_token = EmailVerificationToken.objects.create(user=user)
             
             # Send verification email with code
+            subjet = "Verify your email address"
             verification_message = f"""
 Hello,
 
@@ -174,14 +184,20 @@ If you didn't create an account, you can safely ignore this email.
 Best regards,
 The HireMod Team
 """
-            
-            send_mail(
-                subject="Verify your email address",
-                message=verification_message,
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[user.email],
-                fail_silently=False,
-            )
+            msg = f"Subject: {subjet}\n\n{verification_message}"
+            smtp =smtplib.SMTP('smtp.elasticemail.com', port='2525')
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+            smtp.sendmail(settings.EMAIL_FROM, user.email, msg)
+            smtp.quit()
+            # send_mail(
+            #     subject="Verify your email address",
+            #     message=verification_message,
+            #     from_email=settings.EMAIL_HOST_USER,
+            #     recipient_list=[user.email],
+            #     fail_silently=False,
+            # )
             
             response = Response(
                 {"detail": "Email not verified. A new verification code has been sent to your email."}, 
@@ -293,6 +309,7 @@ class ResendVerificationEmailView(APIView):
             verification_token = EmailVerificationToken.objects.create(user=user)
             
             # Send verification email with code
+            subjet = "Verify your email address"
             verification_message = f"""
 Hello,
 
@@ -305,14 +322,20 @@ If you didn't create an account, you can safely ignore this email.
 Best regards,
 The HireMod Team
 """
-            
-            send_mail(
-                subject="Verify your email address",
-                message=verification_message,
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[user.email],
-                fail_silently=False,
-            )
+            msg = f"Subject: Verify your email address\n\n{verification_message}"
+            smtp =smtplib.SMTP('smtp.elasticemail.com', port='2525')
+            smtp.ehlo()
+            smtp.starttls()
+            smtp.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+            smtp.sendmail(settings.EMAIL_FROM, user.email, msg)
+            smtp.quit()
+            # send_mail(
+            #     subject="Verify your email address",
+            #     message=verification_message,
+            #     from_email=settings.EMAIL_HOST_USER,
+            #     recipient_list=[user.email],
+            #     fail_silently=False,
+            # )
             
             return Response({'detail': 'Verification code sent to your email'}, status=status.HTTP_200_OK)
             
