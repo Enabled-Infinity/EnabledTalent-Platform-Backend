@@ -154,4 +154,3 @@ def query_candidates(query: str):
         return processed_results
     else:
         return {"raw_results": [], "processed_summary": "No relevant candidates found in the database matching the query criteria."}
-

@@ -4,23 +4,17 @@ from dotenv import load_dotenv
 
 
 load_dotenv()
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ['SECRET_KEY']
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = ['*', '3.99.190.148', 'hiremod.vercel.app']
 
 
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -28,22 +22,23 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    "daphne",
     'django.contrib.staticfiles',
-    "channels",
     'rest_framework',
     "corsheaders",
     "django_rest_passwordreset",
     'main',
     'organization',
     'users',
-    'candidates',
-    'django_celery_beat',
-    'django_celery_results',
+    'candidates'
 ]
 
+AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY_ID']
+AWS_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
+AWS_STORAGE_BUCKET_NAME = os.environ['AWS_STORAGE_BUCKET_NAME']
+DEFAULT_FILE_STORAGE = "backends.storage.MediaStorage"
+AWS_S3_REGION_NAME= "eu-north-1"
 SESSION_SAVE_EVERY_REQUEST = True
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 3600
 SESSION_COOKIE_SAMESITE = 'None'
@@ -90,8 +85,7 @@ TEMPLATES = [
     },
 ]
 
-#WSGI_APPLICATION = 'backends.wsgi.application'
-ASGI_APPLICATION= 'backends.asgi.application'
+WSGI_APPLICATION = 'backends.wsgi.application'
 AUTH_USER_MODEL= 'users.User'
 
 EMAIL_HOST = os.environ["EMAIL_HOST"]
@@ -107,8 +101,7 @@ INTERNAL_IPS = [
     "127.0.0.1",
     '3.99.190.148'
 ]
-# Database
-# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+
 
 if os.getenv("DB_NAME") and not DEBUG:  # use postgres if env variables are configured
     DATABASES = {
@@ -145,8 +138,7 @@ else:
     }
     """
 
-# Password validation
-# https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -164,8 +156,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.0/topics/i18n/
+
 
 LANGUAGE_CODE = 'en-us'
 
@@ -176,8 +167,7 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
+
 
 STATIC_URL = 'static/'
 
@@ -189,15 +179,14 @@ REST_FRAMEWORK = {
             'rest_framework.permissions.IsAuthenticated',
         ],
         'DEFAULT_AUTHENTICATION_CLASSES': (
-            #'rest_framework.authentication.BasicAuthentication',  # enables simple command line authentication
             'rest_framework.authentication.SessionAuthentication',
             'rest_framework.authentication.TokenAuthentication',
         )
     }
 
 CORS_ALLOW_HEADERS = [
-    'X-CSRFToken',  # Add any other headers you need to allow
-    'Content-Type',  # Include Content-Type header
+    'X-CSRFToken',  
+    'Content-Type',  
     'Accept',
     'Authorization',
 ]
@@ -205,12 +194,10 @@ CORS_ALLOW_CREDENTIALS = True
 
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://kleenestar.vercel.app',
     'http://3.99.190.148',
     'https://api.hiremod.io',
     'http://localhost:3000',
-    'https://hiremod.vercel.app',
-    #'35.183.134.254'
+    'https://hiremod.vercel.app'
 ]
 
 CORS_ALLOWED_ORIGINS = CSRF_TRUSTED_ORIGINS
@@ -220,46 +207,6 @@ CORS_ALLOW_CREDENTIALS = True
 
 
 
-# REDIS CONFIGURATION
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
-    },
-    'localcache': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
-    },
-}
-DJANGO_REDIS_IGNORE_EXCEPTIONS = True
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-#CELERY_BROKER_URL = f"redis://:{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
-CELERY_BROKER_URL = "redis://localhost:6379/0"
-
-CELERY_RESULT_BACKEND = "django-db"
-CELERY_ACCEPT_CONTENT = ["application/json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = "Asia/Kolkata" #change timezone based on server time
 USE_TZ = True
-CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
-
-
-# ---------------------------------------------DJANGO CHANNEL SETTINGS------------------------------------------------------
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
-        },
-    },
-}

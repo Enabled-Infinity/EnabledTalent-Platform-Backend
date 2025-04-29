@@ -44,15 +44,18 @@ If you didn't create an account, you can safely ignore this email.
 Best regards,
 The HireMod Team
 """
-        print('dedddd')
-        send_mail(
-            subject="Verify your email address",
-            message=verification_message,
-            from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
-        print('dede')
+        try:
+            print('dedddd')
+            send_mail(
+                subject="Verify your email address",
+                message=verification_message,
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+            print('dede')
+        except Exception as e:
+            print(f"Failed to send verification email: {str(e)}")
         return Response({
             "detail": "Registration successful! Please check your email for a verification code."
         }, status=status.HTTP_201_CREATED)
@@ -69,7 +72,6 @@ The HireMod Team
                 user.delete()
                 return Response({"detail": "Invite Code already used"}, status=status.HTTP_226_IM_USED)
         """
-        # Return response without logging the user in
 
 
 

@@ -3,7 +3,6 @@ import os
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from openai import OpenAI
-import json
 
 load_dotenv()
 

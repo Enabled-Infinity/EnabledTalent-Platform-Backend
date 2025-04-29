@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 from .models import JobPost
 from candidates.models import CandidateProfile
 from django.shortcuts import get_object_or_404
-import psycopg2
 import tiktoken
 import json
 import datetime
