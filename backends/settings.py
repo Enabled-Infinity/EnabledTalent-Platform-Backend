@@ -210,7 +210,8 @@ CSRF_TRUSTED_ORIGINS = [
     'http://3.99.190.148',
     'https://api.hiremod.io',
     'http://localhost:3000',
-    'https://hiremod.vercel.app'
+    'https://hiremod.vercel.app',
+    'https://app.enabledtalent.com'
 ]
 
 CORS_ALLOWED_ORIGINS = CSRF_TRUSTED_ORIGINS
