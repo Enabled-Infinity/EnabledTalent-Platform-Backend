@@ -98,7 +98,7 @@ Your response should be a syntactically correct SQLite query only.
 def query_candidates(query: str):
     # Initialize components
     llm = ChatOpenAI(model='gpt-4o')
-    db = SQLDatabase.from_uri('postgresql://hiremod_user:scL9mjdYqMmY4V61mpKiQg6YiyHDM3Jx@dpg-cvig6apr0fns738ej910-a.oregon-postgres.render.com/hiremod_sz2r')
+    db = SQLDatabase.from_uri('postgresql://postgres:Iamreal123@db-instance.cbgqek6s0vqs.eu-north-1.rds.amazonaws.com:5432/enabledtalent')
     toolkit = SQLDatabaseToolkit(db=db, llm=llm)
     tools = toolkit.get_tools()
 
