@@ -142,7 +142,7 @@ def get_career_coach(resume_slug: str, user_query: str, thread_id=None, messages
             Additional Notes: {notes if notes else "No notes added yet."}
             
             Focus on key skills, experiences, and career progression paths. Offer practical tips for job search strategies, resume improvements, and interview preparation.
-            Keep the advice concise and relevant to the candidate's current profile and goals.
+            Keep the advice concise and relevant to the candidate's current profile and goals and make it humanized/very small dont give too descriptive answers.
             """}
         ]
     
