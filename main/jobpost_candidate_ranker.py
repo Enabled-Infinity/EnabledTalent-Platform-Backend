@@ -87,7 +87,7 @@ Estimated Salary: {job_query.estimated_salary}
 Visa Sponsorship Required: {'Yes' if job_query.visa_required else 'No'}
 
 Job Description:
-{job_query.job_desc.strip()}
+{job_query.job_desc if isinstance(job_query.job_desc, str) else json.dumps(job_query.job_desc, indent=2)}
 
 Skills Required:
 {job_skills}
@@ -114,7 +114,7 @@ Slug/Handle: {c.slug}
 
 Summary:
 Resume Data:
-{c.resume_data.strip()}
+{json.dumps(c.resume_data, indent=2) if c.resume_data else "No resume data available"}
 
 Willing to Relocate: {'Yes' if c.willing_to_relocate else 'No'}
 Expected Salary: {c.expected_salary_range}
@@ -129,7 +129,7 @@ This candidate is currently available and actively looking for opportunities.
         candidate_data.append({
             "id": c.id,
             "slug": c.slug,
-            "resume_data": c.resume_data.strip(),
+            "resume_data": json.dumps(c.resume_data) if c.resume_data else "No resume data available",
             "profile": profile.strip()
         })
 
@@ -146,7 +146,7 @@ This candidate is currently available and actively looking for opportunities.
     job_query.save()
 
     return {
-        "job": job_description.strip(),
+        "job": job_description,
         "ranked_candidates": ranked_candidates,
         "token_usage": total_tokens,
         "estimated_cost": total_cost
