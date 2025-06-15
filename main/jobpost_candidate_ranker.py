@@ -93,12 +93,12 @@ Skills Required:
 {job_skills}
 """
 
-    skills_synonames= client.beta.chat.completions.parse(model="gpt-4o", messages=[{'role': 'system', "content": "You're an Keyword/Synoname generating assistant which generates similar keywords for any given particular skill, Example: Sample Input=Python Backend Developer, Sample Output= Python, Django, Flask, ORM, databases, FastAPI, etc, etc"},
+    skills_synonames= client.responses.parse(model="gpt-4o", input=[{'role': 'developer', "content": "You're an Keyword/Synoname generating assistant which generates similar keywords for any given particular skill, Example: Sample Input=Python Backend Developer, Sample Output= Python, Django, Flask, ORM, databases, FastAPI, etc, etc"},
                                                                                {'role': 'user', 'content': f"Generate keywords to search resume in the database for the given Skills {job_skills}"},
                                             ],
-                                            response_format=SkillOutput)
-    expanded_skills= (skills_synonames.choices[0].message.content)
-    print(expanded_skills)
+                                            text_format=SkillOutput)
+    expanded_skills= (skills_synonames.output_parsed)
+    print(expanded_skills.skills)
     # Fetch candidates
     candidates = CandidateProfile.objects.filter(is_available=True, resume_data__isnull=False)
     if job_query.visa_required:

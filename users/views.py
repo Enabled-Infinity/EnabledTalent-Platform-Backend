@@ -10,6 +10,7 @@ from django.conf import settings
 from . import serializers,permissions as  pp
 from organization.models import OrganizationInvite
 import smtplib
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 
 class SignupView(APIView):
@@ -226,6 +227,7 @@ class LogoutView(APIView):
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.UserSerializer
     permission_classes = (pp.UserViewSetPermissions,)
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     queryset = User.objects.all().select_related("profile")
 
     def list(self, request, *args, **kwargs):
@@ -235,12 +237,23 @@ class UserViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop("partial",False)
         instance= self.get_object()
-        serializer = serializers.UserSerializer(
+        
+        # Use UserUpdateSerializer for updates that can handle avatar uploads
+        serializer = serializers.UserUpdateSerializer(
             instance=instance,data=request.data,partial=partial
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data,status=status.HTTP_200_OK)
+        updated_instance = serializer.save()
+        
+        # Return the full user data using the main serializer
+        return Response(
+            serializers.UserSerializer(updated_instance).data,
+            status=status.HTTP_200_OK
+        )
+    
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
     
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

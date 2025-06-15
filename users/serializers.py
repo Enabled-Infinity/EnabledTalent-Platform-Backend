@@ -17,13 +17,13 @@ class UserCreateSerializer(serializers.ModelSerializer):
                 email=validated_data["email"], password=validated_data["password"]
                 )
         else:
-            return  serializers.ValidationError("Password and confirmation do not match.") 
+            return  serializers.ValidationError("Password and confirmation do not match.")
 
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        read_only = ["referral_code"]
+        read_only = ["referral_code", "user"]
         fields = (
             "id",
             "user",
@@ -32,7 +32,35 @@ class ProfileSerializer(serializers.ModelSerializer):
             "total_referrals",
         )
 
-       
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    avatar = serializers.ImageField(required=False, allow_null=True)
+    
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "first_name",
+            "email", 
+            "last_name",
+            "avatar"
+        )
+    
+    def update(self, instance, validated_data):
+        avatar = validated_data.pop('avatar', None)
+        
+        # Update user fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        
+        # Update avatar in profile
+        if avatar is not None:
+            profile, created = Profile.objects.get_or_create(user=instance)
+            profile.avatar = avatar
+            profile.save()
+        return instance
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
@@ -54,16 +82,24 @@ class UserSerializer(serializers.ModelSerializer):
     
     def update(self, instance, validated_data):
         profile_data = validated_data.pop('profile', None)
+        
+        # Update user fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
 
         # Update or create profile related to the user
         if profile_data:
-            profile_instance, _ = Profile.objects.update_or_create(user=instance, defaults=profile_data)
-            # Update profile instance with nested serializer data
-            ProfileSerializer(profile_instance, data=profile_data, partial=True).is_valid(raise_exception=True)
-            profile_instance.save()
+            profile_instance = getattr(instance, 'profile', None)
+            if profile_instance:
+                # Update existing profile
+                profile_serializer = ProfileSerializer(profile_instance, data=profile_data, partial=True)
+                if profile_serializer.is_valid():
+                    profile_serializer.save()
+            else:
+                # Create new profile if it doesn't exist
+                Profile.objects.create(user=instance, **profile_data)
+        
         return instance
     
 

@@ -61,9 +61,8 @@ class JobPostViewSet(viewsets.ModelViewSet):
         Triggers the candidate ranking algorithm for a job post
         """
         job = self.get_object()
-        
+        print(job)
         try:
-            # Run the ranking algorithm
             result = ranking_algo(job.id)
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:

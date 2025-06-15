@@ -12,7 +12,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
     users = UserSerializer(many=True)
     class Meta:
         model= Organization
-        fields= ['root_user','headquarter_location', 'about', 'employee_size', 'users', 'name', 'url', 'industry', 'linkedin_url', 'created_at', 'avatar']
+        fields= ['root_user','headquarter_location', 'about', 'employee_size', 'users', 'name', 'url', 'industry', 'linkedin_url', 'created_at', 'avatar', 'id']
 
 
 class OrganizationInviteCreateSerializer(serializers.ModelSerializer):
