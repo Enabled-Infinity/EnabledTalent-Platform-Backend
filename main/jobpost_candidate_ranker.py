@@ -75,6 +75,12 @@ def ranking_algo(job_id: int):
 
     # Extract skills into a comma-separated string
     job_skills = ", ".join([skill.name for skill in job_query.skills.all()])
+    skills_synonames= client.responses.parse(model="gpt-4o", input=[{'role': 'developer', "content": "You're an Keyword/Synoname generating assistant which generates similar keywords for any given particular skill, Example: Sample Input=Python Backend Developer, Sample Output= Python, Django, Flask, ORM, databases, FastAPI, etc, etc"},
+                                                                               {'role': 'user', 'content': f"Generate keywords to search resume in the database for the given Skills {job_skills}"},
+                                            ],
+                                            text_format=SkillOutput)
+    expanded_skills= (skills_synonames.output_parsed)
+    print(expanded_skills.skills)
 
     job_description = f"""
 Job Overview
@@ -93,12 +99,6 @@ Skills Required:
 {job_skills}
 """
 
-    skills_synonames= client.responses.parse(model="gpt-4o", input=[{'role': 'developer', "content": "You're an Keyword/Synoname generating assistant which generates similar keywords for any given particular skill, Example: Sample Input=Python Backend Developer, Sample Output= Python, Django, Flask, ORM, databases, FastAPI, etc, etc"},
-                                                                               {'role': 'user', 'content': f"Generate keywords to search resume in the database for the given Skills {job_skills}"},
-                                            ],
-                                            text_format=SkillOutput)
-    expanded_skills= (skills_synonames.output_parsed)
-    print(expanded_skills.skills)
     # Fetch candidates
     candidates = CandidateProfile.objects.filter(is_available=True, resume_data__isnull=False)
     if job_query.visa_required:

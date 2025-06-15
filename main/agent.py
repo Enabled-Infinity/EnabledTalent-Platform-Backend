@@ -11,56 +11,7 @@ load_dotenv()
 
 client= OpenAI()
 # FewShot Examples related to the candidates_profile table
-examples = [
-    {
-        "query": "Find backend developers with 3+ years of experience and experience in Python",
-        "sql": "SELECT resume_data, skills, experience, slug FROM candidates_profile WHERE resume_data->>'$.skills' LIKE '%backend%' AND resume_data->>'$.skills' LIKE '%Python%' AND resume_data->>'$.experience' >= 3 ORDER BY resume_data->>'$.experience' DESC LIMIT 10;"
-    },
-    {
-        "query": "Show me marketing specialists with at least 5 years of experience",
-        "sql": "SELECT resume_data, slug FROM candidates_profile WHERE resume_data->>'$.role' LIKE '%marketing%' AND resume_data->>'$.experience' >= 5 ORDER BY resume_data->>'$.experience' DESC LIMIT 10;"
-    },
-    {
-        "query": "Find candidates proficient in React and frontend development with 2+ years of experience who are willing to relocate",
-        "sql": "SELECT resume_data, willing_to_relocate, slug FROM candidates_profile WHERE resume_data->>'$.skills' LIKE '%React%' AND resume_data->>'$.skills' LIKE '%frontend%' AND resume_data->>'$.experience' >= 2 AND willing_to_relocate = true ORDER BY resume_data->>'$.experience' DESC LIMIT 10;"
-    },
-    {
-        "query": "Get Python developers located in Bangalore with 4+ years of experience who prefer remote work",
-        "sql": "SELECT resume_data, work_mode_preferences, slug FROM candidates_profile WHERE resume_data->>'$.skills' LIKE '%Python%' AND resume_data->>'$.location' = 'Bangalore' AND resume_data->>'$.experience' >= 4 AND work_mode_preferences @> '[\"Remote\"]' ORDER BY resume_data->>'$.experience' DESC LIMIT 10;"
-    },
-    {
-        "query": "Find UI/UX designers who need accommodation for their disability",
-        "sql": "SELECT resume_data, disability_categories, accommodation_needs, slug FROM candidates_profile WHERE resume_data->>'$.role' LIKE '%UI/UX%' AND accommodation_needs = 'YES' ORDER BY resume_data->>'$.experience' DESC LIMIT 10;"
-    },
-    {
-        "query": "Get candidates with a work visa who are looking for full-time employment",
-        "sql": "SELECT resume_data, has_workvisa, employment_type_preferences, slug FROM candidates_profile WHERE has_workvisa = true AND employment_type_preferences @> '[\"Full-time\"]' ORDER BY resume_data->>'$.experience' DESC LIMIT 10;"
-    },
-    {
-        "query": "Find candidates with an expected salary range between 80K and 100K who have submitted a video pitch",
-        "sql": "SELECT resume_data, expected_salary_range, video_pitch_url, slug FROM candidates_profile WHERE expected_salary_range BETWEEN '80000' AND '100000' AND video_pitch_url IS NOT NULL ORDER BY resume_data->>'$.experience' DESC LIMIT 10;"
-    }
-]
-
 # Create the example template
-example_template = """
-User Query: {query}
-SQL Query: {sql}
-"""
-
-example_prompt = PromptTemplate(
-    input_variables=["query", "sql"],
-    template=example_template
-)
-
-# Create FewShotPromptTemplate
-few_shot_prompt = FewShotPromptTemplate(
-    examples=examples,
-    example_prompt=example_prompt,
-    prefix="You are an AI assistant designed to help with recruitment queries. Below are example queries with their corresponding SQL queries:\n",
-    suffix="\nNow generate an SQL query for the given recruiter request: {query}",
-    input_variables=["query"]
-)
 
 # SQL_PREFIX optimized for candidates_profile table
 SQL_PREFIX = """You are an agent designed to interact with a SQL database for recruitment purposes.
@@ -103,11 +54,10 @@ def query_candidates(query: str):
     tools = toolkit.get_tools()
 
     # Format the prompt
-    formatted_prompt = few_shot_prompt.format(query=query)
-    system_message = SystemMessage(content=SQL_PREFIX + "\n" + formatted_prompt)
+    system_message = SystemMessage(content=SQL_PREFIX)
 
     # Create the agent
-    agent_executor = create_react_agent(llm, tools, messages_modifier=system_message)
+    agent_executor = create_react_agent(llm, tools, prompt=system_message)
     
     # Invoke the agent
     results = agent_executor.invoke({"messages": [HumanMessage(content=query)]})
