@@ -100,7 +100,7 @@ Skills Required:
 """
 
     # Fetch candidates
-    candidates = CandidateProfile.objects.filter(is_available=True, resume_data__isnull=False)
+    candidates = CandidateProfile.objects.filter(is_available=True, resume_data__isnull=False)[:5]
     if job_query.visa_required:
         candidates = candidates.filter(has_workvisa=True)
 
