@@ -50,7 +50,7 @@ The HireMod Team
         msg = f"Subject: {subjet}\n\n{verification_message}"
         try:
             print('dedddd')
-            smtp =smtplib.SMTP('smtp.elasticemail.com', port='2525')
+            smtp =smtplib.SMTP('smtp.gmail.com', port=587)
             smtp.ehlo()
             smtp.starttls()
             smtp.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
@@ -186,9 +186,10 @@ Best regards,
 The HireMod Team
 """
             msg = f"Subject: {subjet}\n\n{verification_message}"
-            smtp =smtplib.SMTP('smtp.elasticemail.com', port='2525')
+            smtp =smtplib.SMTP('smtp.gmail.com', port=587)
             smtp.ehlo()
             smtp.starttls()
+            print(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
             smtp.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
             smtp.sendmail(settings.EMAIL_FROM, user.email, msg)
             smtp.quit()
@@ -336,9 +337,13 @@ Best regards,
 The HireMod Team
 """
             msg = f"Subject: Verify your email address\n\n{verification_message}"
-            smtp =smtplib.SMTP('smtp.elasticemail.com', port='2525')
+            print('xyzz')
+            print(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
+            smtp =smtplib.SMTP('smtp.gmail.com', port=587)
+            print('vvfv')
             smtp.ehlo()
             smtp.starttls()
+            print(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
             smtp.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
             smtp.sendmail(settings.EMAIL_FROM, user.email, msg)
             smtp.quit()

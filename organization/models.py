@@ -57,7 +57,7 @@ class Organization(models.Model):
     users= models.ManyToManyField(User)
     name= models.CharField(max_length=100)
     industry= models.IntegerField(choices=INDUSTRIES)
-    assistant_id = models.CharField(max_length=40,blank=True)
+    #assistant_id = models.CharField(max_length=40,blank=True)
     url= models.URLField(unique=True, blank=True, null=True)
     linkedin_url= models.URLField(unique=True, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -75,16 +75,16 @@ class Organization(models.Model):
         is_being_created = self._state.adding
         self.clean()
         super().save(*args, **kwargs)
-
+        
         if is_being_created:
-            assistant = client.beta.assistants.create(
+            """assistant = client.beta.assistants.create(
                 name=self.name,
                 instructions=INSTRUCTIONS,
                 tools=[{"type": "file_search"}], #{"type": "code_interpreter"}, 
                 model="gpt-4o",
             )
             self.assistant_id = assistant.id
-            self.save(update_fields=['assistant_id'])
+            self.save(update_fields=['assistant_id'])"""
 
             def add_member():
                 # Add the root_user of the organization as a member
