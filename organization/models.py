@@ -14,7 +14,15 @@ INDUSTRIES= (
     (1, "IT SERVICES"),
     (2, "Product Based"),
     (3, "Finance"),
-    (4, "Sport")
+    (4, "Sport"),
+    (5, "Healthcare"),
+    (6, "Automobile"),
+    (7, "Non-Profit"),
+    (8, "Public-Sector"),
+    (9, "Retail"),
+    (10, "Hospitality"),
+    (11, "Business"),
+    (12, "Others")
 )
 
 COMPANY_SIZING= (
