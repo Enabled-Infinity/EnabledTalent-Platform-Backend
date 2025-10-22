@@ -119,7 +119,7 @@ def get_resume_context(resume_slug: str, user_query: str, thread_id=None, messag
     
     # Get response from LLM
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-5",
         messages=messages
     )
     
@@ -163,7 +163,7 @@ def get_career_coach(resume_slug: str, user_query: str, thread_id=None, messages
     
     # Get response from LLM
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-5",
         messages=messages
     )
     

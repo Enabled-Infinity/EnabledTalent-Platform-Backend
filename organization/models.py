@@ -89,7 +89,7 @@ class Organization(models.Model):
                 name=self.name,
                 instructions=INSTRUCTIONS,
                 tools=[{"type": "file_search"}], #{"type": "code_interpreter"}, 
-                model="gpt-4o",
+                model="gpt-5",
             )
             self.assistant_id = assistant.id
             self.save(update_fields=['assistant_id'])"""

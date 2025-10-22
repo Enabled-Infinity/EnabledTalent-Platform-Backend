@@ -105,7 +105,7 @@ def extract_structured_data(text):
                     """
     
     completion = client.beta.chat.completions.parse(
-        model="gpt-4o-2024-08-06",
+        model="gpt-5",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": "Extract structured information from this resume text: " + text},

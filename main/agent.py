@@ -48,7 +48,7 @@ Your response should be a syntactically correct SQLite query only.
 
 def query_candidates(query: str):
     # Initialize components
-    llm = ChatOpenAI(model='gpt-4o')
+    llm = ChatOpenAI(model='gpt-5')
     db = SQLDatabase.from_uri('postgresql://postgres:Iamreal123@database-1.chqy0mg0kjip.ca-central-1.rds.amazonaws.com:5432/enabledtalent')
     toolkit = SQLDatabaseToolkit(db=db, llm=llm)
     tools = toolkit.get_tools()
@@ -92,7 +92,7 @@ def query_candidates(query: str):
         
         # Get LLM processed summary
         summary_response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5",
             messages=[{"role": "system", "content": summary_prompt}]
         )
         

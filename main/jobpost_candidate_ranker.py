@@ -163,9 +163,8 @@ def rank_candidates_by_match(job_description, candidate_data):
     total_output_tokens = 0
     total_cost = 0
     
-    # Initialize the tokenizer for GPT-4o
     try:
-        encoding = tiktoken.encoding_for_model("gpt-4o")
+        encoding = tiktoken.encoding_for_model("gpt-5")
     except:
         # Fallback to cl100k_base which is often used for newer models
         encoding = tiktoken.get_encoding("cl100k_base")
@@ -202,7 +201,7 @@ Return only a JSON object with the following structure:
         
         try:
             response = client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-5",
                 messages=[{"role": "system", "content": system_message},
                           {"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
