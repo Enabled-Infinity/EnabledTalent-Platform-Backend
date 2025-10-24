@@ -56,13 +56,6 @@ The HireMod Team
             smtp.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
             smtp.sendmail(settings.EMAIL_FROM, user.email, msg)
             smtp.quit()
-            # send_mail(
-            #     subject="Verify your email address",
-            #     message=verification_message,
-            #     from_email=settings.EMAIL_HOST_USER,
-            #     recipient_list=[user.email],
-            #     fail_silently=False,
-            # )
             print('dede')
         except Exception as e:
             print(f"Failed to send verification email: {str(e)}")
@@ -70,18 +63,6 @@ The HireMod Team
             "detail": "Registration successful! Please check your email for a verification code."
         }, status=status.HTTP_201_CREATED)
     
-        """
-        if invite_code:
-            # add the user to the organization
-            if invite.accepted == False:
-                invite.organization.users.add(user)
-                invite.accepted=True
-                invite.save()
-            else:
-                print(user)
-                user.delete()
-                return Response({"detail": "Invite Code already used"}, status=status.HTTP_226_IM_USED)
-        """
 
 
 
@@ -163,12 +144,15 @@ class LoginView(APIView):
             return response
         
         if not user.is_verified:
-            # Resend verification email
-            verification_token, created = EmailVerificationToken.objects.get_or_create(user=user)
-            
-            # If token already exists but we're not creating a new one, delete and create fresh
-            if not created:
-                verification_token.delete()
+            # Check if user has a valid (non-expired) token
+            try:
+                verification_token = EmailVerificationToken.objects.get(user=user)
+                if verification_token.is_expired:
+                    # Only delete and create new token if current one is expired
+                    verification_token.delete()
+                    verification_token = EmailVerificationToken.objects.create(user=user)
+            except EmailVerificationToken.DoesNotExist:
+                # Create new token if none exists
                 verification_token = EmailVerificationToken.objects.create(user=user)
             
             # Send verification email with code
@@ -316,11 +300,16 @@ class ResendVerificationEmailView(APIView):
             if user.is_verified:
                 return Response({'detail': 'Email is already verified'}, status=status.HTTP_400_BAD_REQUEST)
             
-            # Delete any existing tokens
-            EmailVerificationToken.objects.filter(user=user).delete()
-            
-            # Create new verification token
-            verification_token = EmailVerificationToken.objects.create(user=user)
+            # Check if user has a valid (non-expired) token
+            try:
+                verification_token = EmailVerificationToken.objects.get(user=user)
+                if verification_token.is_expired:
+                    # Only delete and create new token if current one is expired
+                    verification_token.delete()
+                    verification_token = EmailVerificationToken.objects.create(user=user)
+            except EmailVerificationToken.DoesNotExist:
+                # Create new token if none exists
+                verification_token = EmailVerificationToken.objects.create(user=user)
             
             # Send verification email with code
             subjet = "Verify your email address"
@@ -347,13 +336,6 @@ The HireMod Team
             smtp.login(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
             smtp.sendmail(settings.EMAIL_FROM, user.email, msg)
             smtp.quit()
-            # send_mail(
-            #     subject="Verify your email address",
-            #     message=verification_message,
-            #     from_email=settings.EMAIL_HOST_USER,
-            #     recipient_list=[user.email],
-            #     fail_silently=False,
-            # )
             
             return Response({'detail': 'Verification code sent to your email'}, status=status.HTTP_200_OK)
             
