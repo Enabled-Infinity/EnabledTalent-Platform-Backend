@@ -11,7 +11,7 @@ from django.core.files.storage import default_storage
 from .resume_parser import parse_resume
 
 class CandidateViewSet(viewsets.ModelViewSet):
-    permission_classes= (permissions.AllowAny,)
+    permission_classes= (permissions.IsAuthenticated,)
     serializer_class= serializers.CandidateProfileSerializer
     queryset= models.CandidateProfile.objects.all()
     parser_classes = [MultiPartParser, FormParser, JSONParser]
@@ -38,10 +38,7 @@ class CandidateViewSet(viewsets.ModelViewSet):
             data= request.data
         )
         serializer.is_valid(raise_exception=True)
-        if self.request.user.is_authenticated:
-            instance = serializer.save(user= self.request.user)
-        else:
-            instance = serializer.save()
+        instance = serializer.save(user= self.request.user)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     """
