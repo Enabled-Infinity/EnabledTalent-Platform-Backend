@@ -77,5 +77,3 @@ whitenoise==6.9.0
 xxhash==3.5.0
 yarl==1.20.0
 zstandard==0.23.0
-celery==5.4.0
-redis==5.2.0

@@ -9,8 +9,6 @@ from rest_framework.views import APIView
 from .jobpost_candidate_ranker import ranking_algo
 from .serializers import AgentQuerySerializer, AgentResponseSerializer
 from main.agent import query_candidates
-from .tasks import rank_candidates_task
-from celery.result import AsyncResult
 
 load_dotenv()
 client= OpenAI()
@@ -60,26 +58,16 @@ class JobPostViewSet(viewsets.ModelViewSet):
     @action(methods=["POST"], detail=True, url_path="rank-candidates")
     def rank_candidates(self, request, pk=None):
         """
-        Triggers the candidate ranking algorithm for a job post in the background
-        Returns a task ID that can be used to check status and retrieve results
+        Triggers the candidate ranking algorithm for a job post
         """
         job = self.get_object()
-        print(f"Starting ranking task for job: {job}")
-        
+        print(job)
         try:
-            # Start the background task
-            task = rank_candidates_task.delay(job.id)
-            
-            return Response({
-                "message": "Candidate ranking task started successfully",
-                "task_id": task.id,
-                "status": "PENDING",
-                "job_id": job.id
-            }, status=status.HTTP_202_ACCEPTED)
-            
+            result = ranking_algo(job.id)
+            return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
-                {"detail": f"Error starting ranking task: {str(e)}"},
+                {"detail": f"Error ranking candidates: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
@@ -97,62 +85,6 @@ class JobPostViewSet(viewsets.ModelViewSet):
             )
         
         return Response(job.candidate_ranking_data, status=status.HTTP_200_OK)
-
-    @action(methods=["GET"], detail=False, url_path="task-status/(?P<task_id>[^/.]+)")
-    def get_task_status(self, request, task_id=None):
-        """
-        Check the status of a background task and retrieve results if completed
-        """
-        try:
-            # Get the task result
-            task_result = AsyncResult(task_id)
-            
-            if task_result.state == 'PENDING':
-                response_data = {
-                    'task_id': task_id,
-                    'status': 'PENDING',
-                    'message': 'Task is waiting to be processed'
-                }
-            elif task_result.state == 'STARTED':
-                response_data = {
-                    'task_id': task_id,
-                    'status': 'STARTED',
-                    'message': 'Task is currently being processed'
-                }
-            elif task_result.state == 'PROGRESS':
-                response_data = {
-                    'task_id': task_id,
-                    'status': 'PROGRESS',
-                    'message': task_result.info.get('message', 'Task is in progress')
-                }
-            elif task_result.state == 'SUCCESS':
-                response_data = {
-                    'task_id': task_id,
-                    'status': 'SUCCESS',
-                    'message': 'Task completed successfully',
-                    'result': task_result.result
-                }
-            elif task_result.state == 'FAILURE':
-                response_data = {
-                    'task_id': task_id,
-                    'status': 'FAILURE',
-                    'message': 'Task failed',
-                    'error': str(task_result.info)
-                }
-            else:
-                response_data = {
-                    'task_id': task_id,
-                    'status': task_result.state,
-                    'message': f'Task state: {task_result.state}'
-                }
-            
-            return Response(response_data, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            return Response(
-                {"detail": f"Error checking task status: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 
 class AgentAPI(APIView):
     permission_classes = (permissions.AllowAny,)
