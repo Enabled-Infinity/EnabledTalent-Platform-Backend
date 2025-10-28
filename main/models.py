@@ -21,6 +21,7 @@ WORK_TYPES= (
     (7, 'Internship')
 )
 
+
 class Skills(models.Model):
     name= models.CharField(max_length=100)
 
