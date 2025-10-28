@@ -75,7 +75,7 @@ class Projects(BaseModel):
 
 class ResumeData(BaseModel):
     personal_info: PersonalInfo
-    qualificaions: list[Info]
+    qualifications: list[Info]
     skills: list[Skill]
     work_experience: list[WorkEXP]
 
@@ -94,14 +94,16 @@ def extract_structured_data(text):
                         2. If information is missing, use "-" as a placeholder.
                         3. Capture:
                         - Personal info: name, email, phone, LinkedIn, GitHub, website (if mentioned)
-                        - Education: title, description, institution, dates.
-                        - Skills: list all mentioned
-                        - WorkEXP(Work experience): company name, role, duration, responsibilities.
+                        - Education/Qualifications: degree, institution, field of study, graduation year, GPA (if mentioned)
+                        - Skills: list all mentioned technical and soft skills
+                        - Work Experience: company name, role, duration, responsibilities
 
                         Guidelines:
-                        - Normalize tech terms (e.g., React.js, PostgreSQL).
-                        - Be concise and structured.
-                        - If some fields like GitHub/LinkedIn aren't URLs but are mentioned (e.g., "github.com/jeby"), include them as-is.
+                        - For qualifications/education: Include degree type (Bachelor's, Master's, PhD, etc.), institution name, field of study, and graduation year if available
+                        - Normalize tech terms (e.g., React.js, PostgreSQL)
+                        - Be concise and structured
+                        - If some fields like GitHub/LinkedIn aren't URLs but are mentioned (e.g., "github.com/jeby"), include them as-is
+                        - Pay special attention to education sections - look for keywords like "Education", "Academic Background", "Degrees", "University", "College", "Bachelor", "Master", "PhD", "Graduation"
                     """
     
     completion = client.beta.chat.completions.parse(
