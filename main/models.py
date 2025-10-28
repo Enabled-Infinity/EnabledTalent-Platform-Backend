@@ -45,6 +45,12 @@ class JobPost(models.Model):
     created_at= models.DateTimeField(auto_now_add=True)
     visa_required= models.BooleanField(default=False)
     candidate_ranking_data = models.JSONField(null=True, blank=True, help_text="Stores candidate ranking results")
+    ranking_status = models.CharField(max_length=20, default='not_started', choices=[
+        ('not_started', 'Not Started'),
+        ('processing', 'Processing'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed')
+    ], help_text="Status of candidate ranking process")
 
     def __str__(self):
         return self.title
