@@ -7,8 +7,7 @@ from rest_framework.response import Response
 from . import models,serializers
 from rest_framework.parsers import FormParser, MultiPartParser,JSONParser
 from django.shortcuts import get_object_or_404
-from django.core.files.storage import default_storage
-from .resume_parser import parse_resume
+from .tasks import parse_resume_task
 
 class CandidateViewSet(viewsets.ModelViewSet):
     permission_classes= (permissions.IsAuthenticated,)
@@ -77,50 +76,60 @@ class CandidateViewSet(viewsets.ModelViewSet):
                 {"error": "No resume file found for this record."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-         
-        try:
-            # Update parsing status to 'in progress'
-            instance.parsing_status = 'parsing'
-            instance.save(update_fields=['parsing_status'])
-             
-             # Get the file path or URL depending on storage backend
-            try:
-                # For local storage
-                resume_url = default_storage.path(instance.resume_file.name)
-            except NotImplementedError:
-                # For S3 or other remote storage
-                print('eewwd')
-                resume_url = default_storage.url(instance.resume_file.name)
-             
-             # Parse the resume
-            parsed_data = parse_resume(resume_url)
-             
-             # Convert Pydantic model to dictionary
-            resume_data_dict = parsed_data.dict() if hasattr(parsed_data, 'dict') else parsed_data.model_dump()
-             
-             # Update the resume record with the parsed data
-            instance.resume_data = resume_data_dict
-            instance.parsing_status = 'parsed'
-            instance.save()
-             
-            # Return the updated instance
-            serializer = self.get_serializer(instance)
+        
+        # Check if already parsed
+        if instance.parsing_status == 'parsed' and instance.resume_data:
             return Response(
                 {
-                    "message": "Resume parsed successfully",
-                    "data": serializer.data
-                }, 
+                    "message": "Resume already parsed",
+                    "parsing_status": instance.parsing_status,
+                    "data": self.get_serializer(instance).data
+                },
                 status=status.HTTP_200_OK
             )
-        except Exception as e:
-            # Update parsing status to 'failed'
-            instance.parsing_status = 'failed'
-            instance.save(update_fields=['parsing_status'])
-
+        
+        # Check if currently parsing
+        if instance.parsing_status == 'parsing':
             return Response(
-                {"error": f"Error parsing resume: {str(e)}"},
+                {
+                    "message": "Resume parsing already in progress",
+                    "parsing_status": instance.parsing_status
+                },
+                status=status.HTTP_202_ACCEPTED
+            )
+        
+        try:
+            # Start background task
+            task = parse_resume_task.delay(instance.id)
+            
+            return Response(
+                {
+                    "message": "Resume parsing started in background",
+                    "parsing_status": "parsing",
+                    "task_id": task.id
+                },
+                status=status.HTTP_202_ACCEPTED
+            )
+            
+        except Exception as e:
+            return Response(
+                {"error": f"Error starting resume parsing: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+    
+    @action(methods=["GET"], detail=True, url_path="parsing-status")
+    def get_parsing_status(self, request, slug):
+        """Get current parsing status"""
+        instance = self.get_object()
+        
+        return Response(
+            {
+                "parsing_status": instance.parsing_status,
+                "has_resume_data": bool(instance.resume_data),
+                "resume_file_exists": bool(instance.resume_file)
+            },
+            status=status.HTTP_200_OK
+        )
     
 
 from .serializers import PromptSerializer, PromptResponseSerializer, CareerCoachSerializer, CareerCoachResponseSerializer

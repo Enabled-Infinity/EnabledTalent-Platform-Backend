@@ -106,16 +106,17 @@ def extract_structured_data(text):
                         - Pay special attention to education sections - look for keywords like "Education", "Academic Background", "Degrees", "University", "College", "Bachelor", "Master", "PhD", "Graduation"
                     """
     
-    completion = client.beta.chat.completions.parse(
+    completion = client.responses.parse(
         model="gpt-5",
-        messages=[
-            {"role": "system", "content": system_prompt},
+        input=[
+            {"role": "developer", "content": system_prompt},
             {"role": "user", "content": "Extract structured information from this resume text: " + text},
         ],
-        response_format=ResumeData,
+        text_format=ResumeData,
     )
-    
-    return completion.choices[0].message.parsed
+    print('aaya1')
+    print(completion.output_parsed)
+    return completion.output_parsed
 
 def parse_resume(resume_url):
     """Parse a resume from a URL."""
@@ -123,10 +124,12 @@ def parse_resume(resume_url):
     
     try:
         # Extract text from PDF URL
+        print('aaya2')
         text = extract_text_from_pdf_url(resume_url)
         
         # Extract structured data from text
         structured_data = extract_structured_data(text)
+        print('aaya3')
         #print(structured_data)
         
         # If resume_id is provided, update the specific fields in the Resume model

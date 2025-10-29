@@ -33,6 +33,12 @@ class Skills(models.Model):
         verbose_name_plural= 'Skills'
 
 class JobPost(models.Model):
+    RANKING_STATUS = (
+        ('not_ranked', 'Not Ranked'),
+        ('ranking', 'Ranking in Progress'),
+        ('ranked', 'Ranked Successfully'),
+        ('failed', 'Ranking Failed'),
+    )
     user= models.ForeignKey(settings.AUTH_USER_MODEL, on_delete= models.CASCADE)
     organization= models.ForeignKey(Organization, on_delete= models.CASCADE)
 
@@ -46,6 +52,8 @@ class JobPost(models.Model):
     created_at= models.DateTimeField(auto_now_add=True)
     visa_required= models.BooleanField(default=False)
     candidate_ranking_data = models.JSONField(null=True, blank=True, help_text="Stores candidate ranking results")
+    ranking_status = models.CharField(max_length=20, choices=RANKING_STATUS, default='not_ranked')
+    ranking_task_id = models.CharField(max_length=255, blank=True, null=True, help_text="Celery task ID for tracking")
 
     def __str__(self):
         return self.title

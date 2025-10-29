@@ -6,7 +6,7 @@ from . import models,serializers
 from dotenv import load_dotenv
 from openai import OpenAI
 from rest_framework.views import APIView
-from .jobpost_candidate_ranker import ranking_algo
+from .tasks import rank_candidates_task
 from .serializers import AgentQuerySerializer, AgentResponseSerializer
 from main.agent import query_candidates
 
@@ -58,16 +58,52 @@ class JobPostViewSet(viewsets.ModelViewSet):
     @action(methods=["POST"], detail=True, url_path="rank-candidates")
     def rank_candidates(self, request, pk=None):
         """
-        Triggers the candidate ranking algorithm for a job post
+        Triggers the candidate ranking algorithm for a job post in background
         """
         job = self.get_object()
-        print(job)
+        
+        # Check if already ranked
+        if job.ranking_status == 'ranked' and job.candidate_ranking_data:
+            return Response(
+                {
+                    "message": "Candidates already ranked",
+                    "ranking_status": job.ranking_status,
+                    "data": job.candidate_ranking_data
+                },
+                status=status.HTTP_200_OK
+            )
+        
+        # Check if currently ranking
+        if job.ranking_status == 'ranking':
+            return Response(
+                {
+                    "message": "Candidate ranking already in progress",
+                    "ranking_status": job.ranking_status,
+                    "task_id": job.ranking_task_id
+                },
+                status=status.HTTP_202_ACCEPTED
+            )
+        
         try:
-            result = ranking_algo(job.id)
-            return Response(result, status=status.HTTP_200_OK)
+            # Start background task
+            task = rank_candidates_task.delay(job.id)
+            
+            # Update job with task ID
+            job.ranking_task_id = task.id
+            job.save(update_fields=['ranking_task_id'])
+            
+            return Response(
+                {
+                    "message": "Candidate ranking started in background",
+                    "ranking_status": "ranking",
+                    "task_id": task.id
+                },
+                status=status.HTTP_202_ACCEPTED
+            )
+            
         except Exception as e:
             return Response(
-                {"detail": f"Error ranking candidates: {str(e)}"},
+                {"error": f"Error starting candidate ranking: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
