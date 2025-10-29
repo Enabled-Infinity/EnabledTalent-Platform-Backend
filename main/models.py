@@ -57,3 +57,10 @@ class JobPost(models.Model):
 
     def __str__(self):
         return self.title
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['organization', 'created_at']),
+            models.Index(fields=['ranking_status']),
+            models.Index(fields=['visa_required']),
+        ]

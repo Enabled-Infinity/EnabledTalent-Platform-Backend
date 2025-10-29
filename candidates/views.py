@@ -19,7 +19,7 @@ class CandidateViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
-            return models.CandidateProfile.objects.filter(user=self.request.user)
+            return models.CandidateProfile.objects.filter(user=self.request.user).select_related('user', 'organization').prefetch_related('notes_set')
         else:
             return models.CandidateProfile.objects.none()
 
@@ -185,7 +185,7 @@ class NoteViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         user = self.request.user
-        return models.Notes.objects.filter(resume__user=user)
+        return models.Notes.objects.filter(resume__user=user).select_related('resume')
     
 
     def update(self, request, *args, **kwargs):

@@ -71,6 +71,12 @@ class CandidateProfile(models.Model):
     
     class Meta:
         ordering= ['organization', 'id']
+        indexes = [
+            models.Index(fields=['is_available', 'parsing_status']),
+            models.Index(fields=['has_workvisa']),
+            models.Index(fields=['slug']),
+            models.Index(fields=['user']),
+        ]
 
 
 class Notes(models.Model):

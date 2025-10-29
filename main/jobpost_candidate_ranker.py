@@ -99,8 +99,16 @@ Skills Required:
 {job_skills}
 """
 
-    # Fetch candidates
-    candidates = CandidateProfile.objects.filter(is_available=True, resume_data__isnull=False)[:5]
+    # Fetch candidates with optimized query
+    candidates = CandidateProfile.objects.filter(
+        is_available=True, 
+        resume_data__isnull=False
+    ).only(
+        'id', 'slug', 'resume_data', 'willing_to_relocate', 
+        'expected_salary_range', 'employment_type_preferences', 
+        'disclosure_preference', 'workplace_accommodations'
+    )[:5]
+    
     if job_query.visa_required:
         candidates = candidates.filter(has_workvisa=True)
 

@@ -2,6 +2,9 @@ from rest_framework import viewsets, status
 from rest_framework import permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.core.cache import cache
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from . import models,serializers
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -22,7 +25,7 @@ class JobPostViewSet(viewsets.ModelViewSet):
     def get_queryset(self, *args, **kwargs):
         return models.JobPost.objects.filter(
             organization= self.request.user.organization_set.all()[0]
-        )
+        ).select_related('user', 'organization').prefetch_related('skills')
     
 
     def create(self, request, *args, **kwargs):
@@ -113,13 +116,22 @@ class JobPostViewSet(viewsets.ModelViewSet):
         Returns the saved candidate ranking data for a job post
         """
         job = self.get_object()
-        print(job)
+        
+        # Cache key for ranking data
+        cache_key = f"job_ranking_data_{job.id}"
+        cached_data = cache.get(cache_key)
+        
+        if cached_data:
+            return Response(cached_data, status=status.HTTP_200_OK)
+        
         if not job.candidate_ranking_data:
             return Response(
                 {"detail": "No ranking data available for this job post."},
                 status=status.HTTP_404_NOT_FOUND
             )
         
+        # Cache the ranking data for 1 hour
+        cache.set(cache_key, job.candidate_ranking_data, 3600)
         return Response(job.candidate_ranking_data, status=status.HTTP_200_OK)
 
 class AgentAPI(APIView):

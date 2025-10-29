@@ -1,9 +1,10 @@
 from celery import shared_task
+from django.core.cache import cache
 from .models import JobPost
 from .jobpost_candidate_ranker import ranking_algo
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, time_limit=1800, soft_time_limit=1500)
 def rank_candidates_task(self, job_id):
     """
     Background task to rank candidates for a job post.
@@ -11,8 +12,8 @@ def rank_candidates_task(self, job_id):
     try:
         print(f"Starting candidate ranking task for job {job_id}")
         
-        # Get the job post
-        job_post = JobPost.objects.get(id=job_id)
+        # Get the job post with optimized query
+        job_post = JobPost.objects.select_related('user', 'organization').prefetch_related('skills').get(id=job_id)
         
         # Update ranking status to 'in progress'
         job_post.ranking_status = 'ranking'
@@ -30,6 +31,10 @@ def rank_candidates_task(self, job_id):
         }
         job_post.ranking_status = 'ranked'
         job_post.save()
+        
+        # Clear cache for this job's ranking data
+        cache_key = f"job_ranking_data_{job_id}"
+        cache.delete(cache_key)
         
         print(f"Candidate ranking completed successfully for job {job_id}")
         return {

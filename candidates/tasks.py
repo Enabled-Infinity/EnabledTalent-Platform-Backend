@@ -4,7 +4,7 @@ from .models import CandidateProfile
 from .resume_parser import parse_resume
 
 
-@shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3, time_limit=1800, soft_time_limit=1500)
 def parse_resume_task(self, candidate_profile_id):
     """
     Background task to parse resume asynchronously.
@@ -12,8 +12,8 @@ def parse_resume_task(self, candidate_profile_id):
     try:
         print(f"Starting resume parsing task for candidate {candidate_profile_id}")
         
-        # Get the candidate profile
-        candidate_profile = CandidateProfile.objects.get(id=candidate_profile_id)
+        # Get the candidate profile with optimized query
+        candidate_profile = CandidateProfile.objects.select_related('user').get(id=candidate_profile_id)
         
         # Check if resume file exists
         if not candidate_profile.resume_file:
