@@ -55,7 +55,7 @@ class CandidateProfile(models.Model):
     is_available = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"Candidate"
+        return f"Candidate {self.user.email} Profile"
     
     @property
     def get_all_notes(self):
