@@ -195,9 +195,7 @@ REST_FRAMEWORK = {
         'DEFAULT_AUTHENTICATION_CLASSES': (
             'rest_framework.authentication.SessionAuthentication',
             'rest_framework.authentication.TokenAuthentication',
-        ),
-        'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-        'PAGE_SIZE': 20,
+        )
     }
 
 CORS_ALLOW_HEADERS = [
@@ -245,9 +243,6 @@ CACHES = {
     }
 }
 
-# Session Configuration with Redis
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'default'
 
 # Celery Configuration
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
