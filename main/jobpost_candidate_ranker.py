@@ -99,40 +99,119 @@ Skills Required:
 {job_skills}
 """
 
-    # Fetch candidates with optimized query
-    candidates = CandidateProfile.objects.filter(
-        is_available=True, 
+    # Fetch candidates base queryset
+    candidates_qs = CandidateProfile.objects.filter(
+        is_available=True,
         resume_data__isnull=False
     ).only(
-        'id', 'slug', 'resume_data', 'willing_to_relocate', 
-        'expected_salary_range', 'employment_type_preferences', 
-        'disclosure_preference', 'workplace_accommodations'
-    )[:5]
+        'id', 'slug', 'resume_data', 'willing_to_relocate',
+        'expected_salary_range', 'employment_type_preferences',
+        'disclosure_preference', 'work_mode_preferences', 'workplace_accommodations',
+        'has_workvisa'
+    )
     
     if job_query.visa_required:
-        candidates = candidates.filter(has_workvisa=True)
+        candidates_qs = candidates_qs.filter(has_workvisa=True)
+
+    # Map job choices to readable strings to compare with candidate preferences
+    work_mode_map = {
+        1: 'Hybrid',
+        2: 'On-site',
+        3: 'Remote',
+    }
+    job_work_mode = work_mode_map.get(job_query.workplace_type)
+    job_type_map = {
+        1: 'Full-time',
+        2: 'Part-time',
+        3: 'Contract',
+        4: 'Temperory',
+        5: 'Other',
+        6: 'Volunteer',
+        7: 'Internship',
+    }
+    job_type_text = job_type_map.get(job_query.job_type)
+
+    # Build expanded skills set (lowercased) for quick matching
+    expanded_skill_set = set(s.lower().strip() for s in (expanded_skills.skills or []))
+    job_skill_set = set(s.lower().strip() for s in job_skills.split(',')) if job_skills else set()
+
+    # Lightweight heuristic scoring to preselect candidates before LLM
+    scored_candidates = []
+    for c in candidates_qs:
+        resume_json = c.resume_data or {}
+        # Try common structures from resume parsing
+        resume_skills = []
+        if isinstance(resume_json, dict):
+            if isinstance(resume_json.get('skills'), list):
+                resume_skills = resume_json.get('skills', [])
+            elif isinstance(resume_json.get('Skills'), list):
+                resume_skills = resume_json.get('Skills', [])
+        # Fallback: try to derive skills from text if provided
+        resume_text_blob = json.dumps(resume_json).lower() if resume_json else ''
+
+        resume_skill_set = set(str(s).lower().strip() for s in resume_skills)
+        # Skill overlap score
+        skill_overlap = len(expanded_skill_set.intersection(resume_skill_set))
+        if skill_overlap == 0 and expanded_skill_set:
+            # Simple fuzzy: count occurrences of any expanded skill token in text blob
+            skill_overlap = sum(1 for s in expanded_skill_set if s and s in resume_text_blob)
+
+        # Work mode preference match
+        work_mode_bonus = 0
+        try:
+            if job_work_mode and c.work_mode_preferences:
+                work_mode_bonus = 1 if any(job_work_mode.lower() == str(w).lower() for w in c.work_mode_preferences) else 0
+        except Exception:
+            work_mode_bonus = 0
+
+        # Employment type match
+        employment_bonus = 0
+        try:
+            if job_type_text and c.employment_type_preferences:
+                employment_bonus = 1 if any(job_type_text.lower() == str(t).lower() for t in c.employment_type_preferences) else 0
+        except Exception:
+            employment_bonus = 0
+
+        # Aggregate heuristic score
+        score = (skill_overlap * 3) + work_mode_bonus + employment_bonus
+
+        # Keep only somewhat relevant
+        if score > 0:
+            scored_candidates.append((score, c))
+
+    # Sort by score desc and cap the number to control LLM cost
+    scored_candidates.sort(key=lambda x: x[0], reverse=True)
+
+    # Ensure we have at least 3; if not, broaden by taking a few available profiles
+    TOP_CANDIDATES_LIMIT = 5  # control LLM cost
+    MIN_CANDIDATES = 3
+    selected = [c for _, c in scored_candidates[:TOP_CANDIDATES_LIMIT]]
+    if len(selected) < MIN_CANDIDATES:
+        needed = MIN_CANDIDATES - len(selected)
+        fallback = candidates_qs.exclude(id__in=[c.id for c in selected])[:needed]
+        selected.extend(list(fallback))
 
     candidates_profiles = []
     candidate_data = []
-    for c in candidates:
+    for c in selected:
         profile = f"""
-Candidate Profile - ID: {c.id}
-------------------------------
-Slug/Handle: {c.slug}
-
-Summary:
-Resume Data:
-{json.dumps(c.resume_data, indent=2) if c.resume_data else "No resume data available"}
-
-Willing to Relocate: {'Yes' if c.willing_to_relocate else 'No'}
-Expected Salary: {c.expected_salary_range}
-
-Preferred Employment Types: {', '.join(c.employment_type_preferences) if c.employment_type_preferences else 'Not specified'}
-Disclosure Preference: {c.disclosure_preference if c.disclosure_preference else 'Not disclosed'}
-Workplace Accommodations: {c.workplace_accommodations if c.workplace_accommodations else 'None specified'}
-
-This candidate is currently available and actively looking for opportunities.
-"""
+        Candidate Profile - ID: {c.id}
+        ------------------------------
+        Slug/Handle: {c.slug}
+        
+        Summary:
+        Resume Data:
+        {json.dumps(c.resume_data, indent=2) if c.resume_data else "No resume data available"}
+        
+        Willing to Relocate: {'Yes' if c.willing_to_relocate else 'No'}
+        Expected Salary: {c.expected_salary_range}
+        
+        Preferred Employment Types: {', '.join(c.employment_type_preferences) if c.employment_type_preferences else 'Not specified'}
+        Disclosure Preference: {c.disclosure_preference if c.disclosure_preference else 'Not disclosed'}
+        Workplace Accommodations: {c.workplace_accommodations if c.workplace_accommodations else 'None specified'}
+        
+        This candidate is currently available and actively looking for opportunities.
+        """
         candidates_profiles.append(profile.strip())
         candidate_data.append({
             "id": c.id,

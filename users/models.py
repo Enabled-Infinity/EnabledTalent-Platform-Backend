@@ -14,7 +14,8 @@ class User(AbstractUser):
     newsletter= models.BooleanField(default=True, help_text="Do you want to receive the newsletter?")
     #ws_channel_name= models.CharField(max_length=300, blank=True, null=True)
     last_online= models.DateTimeField(default=timezone.now)
-    is_verified= models.BooleanField(default=False)
+    #is_verified= models.BooleanField(default=False)
+    is_verified= models.BooleanField(default=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
